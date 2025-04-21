@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.sql.*;
 
 public class DashboardClient extends JFrame {
@@ -9,24 +10,44 @@ public class DashboardClient extends JFrame {
         this.clientId = clientId;
 
         setTitle("Dashboard Client");
-        setSize(400, 200);
+        setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        String[] infosClient = getClientInfoFromDatabase(clientId);
-        String nom = infosClient[0];
-        String prenom = infosClient[1];
+        String nomComplet = getClientFullNameFromDatabase(clientId);
 
-        JLabel label = new JLabel("Bienvenue " + prenom + " " + nom, SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 16));
+        JLabel welcomeLabel = new JLabel("Bienvenue " + nomComplet, SwingConstants.CENTER);
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        add(welcomeLabel, BorderLayout.NORTH);
 
-        add(label);
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 1, 10, 10));
+        JButton btnSearch = new JButton("Trouver Appartement");
+        JButton btnMyRentals = new JButton("Mes Locations");
+        JButton btnProfile = new JButton("Mon Profil");
+        JButton btnLogout = new JButton("Déconnexion");
+
+        buttonPanel.add(btnSearch);
+        buttonPanel.add(btnMyRentals);
+        buttonPanel.add(btnProfile);
+        buttonPanel.add(btnLogout);
+
+        add(buttonPanel, BorderLayout.CENTER);
+
+        // Actions des boutons
+        btnSearch.addActionListener(e -> {dispose(); new SearchAppartement();});
+        btnMyRentals.addActionListener(e -> {dispose(); new MesLocations(clientId);});
+        btnProfile.addActionListener(e -> {dispose(); new MonProfil(clientId);});
+        btnLogout.addActionListener(e -> {
+            dispose();
+            new Login();
+        });
+
         setVisible(true);
     }
 
-    private String[] getClientInfoFromDatabase(int clientId) {
+    private String getClientFullNameFromDatabase(int clientId) {
         String nom = "Client";
-        String prenom = "";
 
         try (Connection conn = DBConnection.getConnection()) {
             String sql = "SELECT nom, prenom FROM clients WHERE client_id = ?";
@@ -35,14 +56,13 @@ public class DashboardClient extends JFrame {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                nom = rs.getString("nom");
-                prenom = rs.getString("prenom");
+                nom = rs.getString("prenom") + " " + rs.getString("nom");
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        return new String[]{nom, prenom};
+        return nom;
     }
 }
