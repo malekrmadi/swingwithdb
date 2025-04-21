@@ -35,7 +35,7 @@ public class DashboardClient extends JFrame {
         add(buttonPanel, BorderLayout.CENTER);
 
         // Actions des boutons
-        btnSearch.addActionListener(e -> {dispose(); new SearchAppartement();});
+        btnSearch.addActionListener(e -> {dispose(); new SearchAppartement(clientId);});
         btnMyRentals.addActionListener(e -> {dispose(); new MesLocations(clientId);});
         btnProfile.addActionListener(e -> {dispose(); new MonProfil(clientId);});
         btnLogout.addActionListener(e -> {
