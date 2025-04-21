@@ -37,7 +37,7 @@ public class Login extends JFrame {
 
                 try (Connection conn = DBConnection.getConnection()) {
 
-                    // Vérifier d'abord si l'utilisateur est un admin
+                    // Vérifier si l'utilisateur est un admin
                     String sqlAdmin = "SELECT * FROM admin WHERE email = ? AND mot_de_passe = ?";
                     PreparedStatement stmtAdmin = conn.prepareStatement(sqlAdmin);
                     stmtAdmin.setString(1, email);
@@ -55,7 +55,7 @@ public class Login extends JFrame {
                         return;
                     }
 
-                    // Sinon, vérifier si c'est un client
+                    // Vérifier si l'utilisateur est un client
                     String sqlClient = "SELECT * FROM clients WHERE email = ? AND mot_de_passe = ?";
                     PreparedStatement stmtClient = conn.prepareStatement(sqlClient);
                     stmtClient.setString(1, email);
@@ -63,12 +63,13 @@ public class Login extends JFrame {
                     ResultSet rsClient = stmtClient.executeQuery();
 
                     if (rsClient.next()) {
+                        int clientId = rsClient.getInt("client_id"); // ⚠ Assure-toi que le champ est bien "client_id"
                         dispose();
-                        new DashboardClient();
+                        new DashboardClient(clientId); // ✅ Passage de l'ID client
                         return;
                     }
 
-                    // Si aucun des deux ne correspond
+                    // Si aucun compte correspondant
                     JOptionPane.showMessageDialog(Login.this, "Email ou mot de passe incorrect.", "Erreur", JOptionPane.ERROR_MESSAGE);
 
                 } catch (SQLException ex) {
