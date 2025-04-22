@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
@@ -7,28 +8,105 @@ public class Login extends JFrame {
     private JTextField emailField;
     private JPasswordField passwordField;
     private JButton loginButton, createAccountButton;
+    private Color primaryColor = new Color(41, 128, 185); // Blue
+    private Color lightColor = new Color(236, 240, 241); // Light gray
+    private Color textColor = new Color(44, 62, 80); // Dark blue/gray
+    private Font mainFont = new Font("Segoe UI", Font.PLAIN, 14);
+    private Font headerFont = new Font("Segoe UI", Font.BOLD, 24);
 
     public Login() {
-        setTitle("Login");
-        setSize(350, 250);
+        setTitle("Connexion");
+        setSize(800, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        getContentPane().setBackground(Color.WHITE);
+        setLayout(new BorderLayout());
 
-        emailField = new JTextField(20);
-        passwordField = new JPasswordField(20);
+        // Header panel
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(primaryColor);
+        headerPanel.setPreferredSize(new Dimension(800, 100));
+        headerPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        
+        JLabel titleLabel = new JLabel("Gestion de Location");
+        titleLabel.setFont(headerFont);
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel);
+        
+        add(headerPanel, BorderLayout.NORTH);
+
+        // Login form panel
+        JPanel formPanel = new JPanel();
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setLayout(null);
+        
+        JLabel loginLabel = new JLabel("Connectez-vous");
+        loginLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        loginLabel.setForeground(textColor);
+        loginLabel.setBounds(300, 30, 200, 30);
+        formPanel.add(loginLabel);
+        
+        JLabel emailLabel = new JLabel("Email:");
+        emailLabel.setFont(mainFont);
+        emailLabel.setForeground(textColor);
+        emailLabel.setBounds(250, 100, 100, 25);
+        formPanel.add(emailLabel);
+        
+        emailField = new JTextField();
+        emailField.setFont(mainFont);
+        emailField.setBounds(250, 130, 300, 35);
+        emailField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        formPanel.add(emailField);
+        
+        JLabel passwordLabel = new JLabel("Mot de passe:");
+        passwordLabel.setFont(mainFont);
+        passwordLabel.setForeground(textColor);
+        passwordLabel.setBounds(250, 180, 150, 25);
+        formPanel.add(passwordLabel);
+        
+        passwordField = new JPasswordField();
+        passwordField.setFont(mainFont);
+        passwordField.setBounds(250, 210, 300, 35);
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        formPanel.add(passwordField);
+        
         loginButton = new JButton("Connexion");
+        loginButton.setFont(mainFont);
+        loginButton.setBounds(250, 270, 300, 40);
+        loginButton.setBackground(primaryColor);
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setFocusPainted(false);
+        loginButton.setBorder(BorderFactory.createEmptyBorder());
+        formPanel.add(loginButton);
+        
         createAccountButton = new JButton("Créer un compte Client");
+        createAccountButton.setFont(mainFont);
+        createAccountButton.setBounds(250, 330, 300, 40);
+        createAccountButton.setBackground(lightColor);
+        createAccountButton.setForeground(textColor);
+        createAccountButton.setFocusPainted(false);
+        createAccountButton.setBorder(BorderFactory.createEmptyBorder());
+        formPanel.add(createAccountButton);
+        
+        add(formPanel, BorderLayout.CENTER);
 
-        JPanel panel = new JPanel(new GridLayout(4, 2));
-        panel.add(new JLabel("Email :"));
-        panel.add(emailField);
-        panel.add(new JLabel("Mot de passe :"));
-        panel.add(passwordField);
-        panel.add(new JLabel(""));
-        panel.add(loginButton);
-        panel.add(createAccountButton);
-
-        add(panel);
+        // Footer panel
+        JPanel footerPanel = new JPanel();
+        footerPanel.setBackground(lightColor);
+        footerPanel.setPreferredSize(new Dimension(800, 50));
+        
+        JLabel footerLabel = new JLabel("© 2023 Gestion de Location. Tous droits réservés.");
+        footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        footerLabel.setForeground(textColor);
+        footerPanel.add(footerLabel);
+        
+        add(footerPanel, BorderLayout.SOUTH);
 
         loginButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -63,9 +141,9 @@ public class Login extends JFrame {
                     ResultSet rsClient = stmtClient.executeQuery();
 
                     if (rsClient.next()) {
-                        int clientId = rsClient.getInt("client_id"); // ⚠ Assure-toi que le champ est bien "client_id"
+                        int clientId = rsClient.getInt("client_id");
                         dispose();
-                        new DashboardClient(clientId); // ✅ Passage de l'ID client
+                        new DashboardClient(clientId);
                         return;
                     }
 

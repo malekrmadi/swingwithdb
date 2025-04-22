@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
@@ -6,45 +7,111 @@ import java.sql.*;
 public class CreateAccountClient extends JFrame {
     private JTextField nomField, prenomField, emailField, adresseField, telephoneField;
     private JPasswordField passwordField, confirmPasswordField;
-    private JButton createAccountButton;
+    private JButton createAccountButton, backButton;
+    private Color primaryColor = new Color(41, 128, 185); // Blue
+    private Color lightColor = new Color(236, 240, 241); // Light gray
+    private Color textColor = new Color(44, 62, 80); // Dark blue/gray
+    private Font mainFont = new Font("Segoe UI", Font.PLAIN, 14);
+    private Font headerFont = new Font("Segoe UI", Font.BOLD, 24);
 
     public CreateAccountClient() {
         setTitle("Créer un compte Client");
-        setSize(400, 300); // Augmenter la taille pour ajouter les nouveaux champs
+        setSize(800, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        getContentPane().setBackground(Color.WHITE);
+        setLayout(new BorderLayout());
 
+        // Header panel
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(primaryColor);
+        headerPanel.setPreferredSize(new Dimension(800, 70));
+        headerPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        
+        JLabel titleLabel = new JLabel("Créer un compte Client");
+        titleLabel.setFont(headerFont);
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel);
+        
+        add(headerPanel, BorderLayout.NORTH);
+
+        // Form panel
+        JPanel formPanel = new JPanel();
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setLayout(null);
+        
         // Initialisation des champs
-        nomField = new JTextField(20);
-        prenomField = new JTextField(20);
-        emailField = new JTextField(20);
-        adresseField = new JTextField(20);
-        telephoneField = new JTextField(20);
-        passwordField = new JPasswordField(20);
-        confirmPasswordField = new JPasswordField(20);
+        nomField = createStyledTextField(formPanel, "Nom:", 50, 30);
+        prenomField = createStyledTextField(formPanel, "Prénom:", 50, 100);
+        emailField = createStyledTextField(formPanel, "Email:", 50, 170);
+        adresseField = createStyledTextField(formPanel, "Adresse:", 50, 240);
+        telephoneField = createStyledTextField(formPanel, "Téléphone:", 50, 310);
+        
+        JLabel passwordLabel = new JLabel("Mot de passe:");
+        passwordLabel.setFont(mainFont);
+        passwordLabel.setForeground(textColor);
+        passwordLabel.setBounds(50, 380, 150, 25);
+        formPanel.add(passwordLabel);
+        
+        passwordField = new JPasswordField();
+        passwordField.setFont(mainFont);
+        passwordField.setBounds(50, 410, 300, 35);
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        formPanel.add(passwordField);
+        
+        JLabel confirmPasswordLabel = new JLabel("Confirmer mot de passe:");
+        confirmPasswordLabel.setFont(mainFont);
+        confirmPasswordLabel.setForeground(textColor);
+        confirmPasswordLabel.setBounds(400, 380, 200, 25);
+        formPanel.add(confirmPasswordLabel);
+        
+        confirmPasswordField = new JPasswordField();
+        confirmPasswordField.setFont(mainFont);
+        confirmPasswordField.setBounds(400, 410, 300, 35);
+        confirmPasswordField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        formPanel.add(confirmPasswordField);
+        
         createAccountButton = new JButton("Créer le compte");
+        createAccountButton.setFont(mainFont);
+        createAccountButton.setBounds(400, 470, 300, 40);
+        createAccountButton.setBackground(primaryColor);
+        createAccountButton.setForeground(Color.WHITE);
+        createAccountButton.setFocusPainted(false);
+        createAccountButton.setBorder(BorderFactory.createEmptyBorder());
+        formPanel.add(createAccountButton);
+        
+        backButton = new JButton("Retour");
+        backButton.setFont(mainFont);
+        backButton.setBounds(50, 470, 300, 40);
+        backButton.setBackground(lightColor);
+        backButton.setForeground(textColor);
+        backButton.setFocusPainted(false);
+        backButton.setBorder(BorderFactory.createEmptyBorder());
+        backButton.addActionListener(e -> {
+            dispose();
+            new Login();
+        });
+        formPanel.add(backButton);
+        
+        add(formPanel, BorderLayout.CENTER);
 
-        // Création du panneau avec une grille
-        JPanel panel = new JPanel(new GridLayout(7, 2)); // Modifier la grille pour ajouter 7 lignes
-        panel.add(new JLabel("Nom :"));
-        panel.add(nomField);
-        panel.add(new JLabel("Prénom :"));
-        panel.add(prenomField);
-        panel.add(new JLabel("Email :"));
-        panel.add(emailField);
-        panel.add(new JLabel("Adresse :"));
-        panel.add(adresseField);  // Ajouter le champ Adresse
-        panel.add(new JLabel("Téléphone :"));
-        panel.add(telephoneField);  // Ajouter le champ Téléphone
-        panel.add(new JLabel("Mot de passe :"));
-        panel.add(passwordField);
-        panel.add(new JLabel("Confirmer mot de passe :"));
-        panel.add(confirmPasswordField);
-        panel.add(new JLabel(""));
-        panel.add(createAccountButton);
-
-        // Ajouter le panneau à la fenêtre
-        add(panel);
+        // Footer panel
+        JPanel footerPanel = new JPanel();
+        footerPanel.setBackground(lightColor);
+        footerPanel.setPreferredSize(new Dimension(800, 40));
+        
+        JLabel footerLabel = new JLabel("© 2023 Gestion de Location. Tous droits réservés.");
+        footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        footerLabel.setForeground(textColor);
+        footerPanel.add(footerLabel);
+        
+        add(footerPanel, BorderLayout.SOUTH);
 
         createAccountButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -106,5 +173,24 @@ public class CreateAccountClient extends JFrame {
         });
 
         setVisible(true);
+    }
+    
+    private JTextField createStyledTextField(JPanel panel, String labelText, int x, int y) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(mainFont);
+        label.setForeground(textColor);
+        label.setBounds(x, y, 150, 25);
+        panel.add(label);
+        
+        JTextField textField = new JTextField();
+        textField.setFont(mainFont);
+        textField.setBounds(x, y + 30, 300, 35);
+        textField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        panel.add(textField);
+        
+        return textField;
     }
 }
