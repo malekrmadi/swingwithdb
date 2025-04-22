@@ -75,7 +75,7 @@ public class AdminAppartements extends JFrame {
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return column == 11; // Only allow editing for the Actions column
             }
         };
 
