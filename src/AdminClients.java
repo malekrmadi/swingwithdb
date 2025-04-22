@@ -205,6 +205,7 @@ public class AdminClients extends JFrame {
 
         TableColumn actionCol = table.getColumn("Actions");
         actionCol.setCellRenderer(new ActionButtonRenderer());
+        actionCol.setCellEditor(new ActionButtonEditor(table));
     }
 
     private JButton createActionButton(String text, Color bgColor) {
@@ -481,6 +482,37 @@ public class AdminClients extends JFrame {
             }
             
             return new JLabel(value == null ? "" : value.toString());
+        }
+    }
+
+    // Editor for action buttons in the table
+    class ActionButtonEditor extends DefaultCellEditor {
+        private JPanel panel;
+
+        public ActionButtonEditor(JTable table) {
+            super(new JCheckBox());
+            panel = null;
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            if (value instanceof JPanel) {
+                panel = (JPanel) value;
+                panel.setBackground(new Color(230, 230, 230));
+                return panel;
+            }
+            return new JLabel(value == null ? "" : value.toString());
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return panel;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            return super.stopCellEditing();
         }
     }
 }

@@ -77,27 +77,34 @@ public class CreateAccountClient extends JFrame {
         ));
         formPanel.add(confirmPasswordField);
         
+        // Buttons panel
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setBounds(50, 470, 700, 40);
+        buttonPanel.setLayout(new GridLayout(1, 2, 50, 0));
+        
         createAccountButton = new JButton("Créer le compte");
         createAccountButton.setFont(mainFont);
-        createAccountButton.setBounds(400, 470, 300, 40);
         createAccountButton.setBackground(primaryColor);
         createAccountButton.setForeground(Color.WHITE);
         createAccountButton.setFocusPainted(false);
-        createAccountButton.setBorder(BorderFactory.createEmptyBorder());
-        formPanel.add(createAccountButton);
+        createAccountButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        createAccountButton.addActionListener(e -> createAccount());
         
         backButton = new JButton("Retour");
         backButton.setFont(mainFont);
-        backButton.setBounds(50, 470, 300, 40);
         backButton.setBackground(lightColor);
         backButton.setForeground(textColor);
         backButton.setFocusPainted(false);
-        backButton.setBorder(BorderFactory.createEmptyBorder());
+        backButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         backButton.addActionListener(e -> {
             dispose();
             new Login();
         });
-        formPanel.add(backButton);
+        
+        buttonPanel.add(createAccountButton);
+        buttonPanel.add(backButton);
+        formPanel.add(buttonPanel);
         
         add(formPanel, BorderLayout.CENTER);
 
@@ -113,66 +120,64 @@ public class CreateAccountClient extends JFrame {
         
         add(footerPanel, BorderLayout.SOUTH);
 
-        createAccountButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String nom = nomField.getText();
-                String prenom = prenomField.getText();
-                String email = emailField.getText();
-                String adresse = adresseField.getText();
-                String telephone = telephoneField.getText();
-                String password = new String(passwordField.getPassword());
-                String confirmPassword = new String(confirmPasswordField.getPassword());
-
-                // Vérifier si les mots de passe correspondent
-                if (!password.equals(confirmPassword)) {
-                    JOptionPane.showMessageDialog(CreateAccountClient.this, "Les mots de passe ne correspondent pas.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                // Vérifier si tous les champs sont remplis
-                if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || adresse.isEmpty() || telephone.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                    JOptionPane.showMessageDialog(CreateAccountClient.this, "Tous les champs doivent être remplis.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                try (Connection conn = DBConnection.getConnection()) {
-                    // Vérifier si l'email existe déjà
-                    String sqlCheckEmail = "SELECT * FROM clients WHERE email = ?";
-                    PreparedStatement stmtCheckEmail = conn.prepareStatement(sqlCheckEmail);
-                    stmtCheckEmail.setString(1, email);
-                    ResultSet rsCheckEmail = stmtCheckEmail.executeQuery();
-
-                    if (rsCheckEmail.next()) {
-                        JOptionPane.showMessageDialog(CreateAccountClient.this, "Cet email est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-
-                    // Insérer le nouveau client dans la base de données
-                    String sqlInsert = "INSERT INTO clients (nom, prenom, email, adresse, telephone, mot_de_passe) VALUES (?, ?, ?, ?, ?, ?)";
-                    PreparedStatement stmtInsert = conn.prepareStatement(sqlInsert);
-                    stmtInsert.setString(1, nom);
-                    stmtInsert.setString(2, prenom);
-                    stmtInsert.setString(3, email);
-                    stmtInsert.setString(4, adresse);
-                    stmtInsert.setString(5, telephone);
-                    stmtInsert.setString(6, password);
-                    int rowsAffected = stmtInsert.executeUpdate();
-
-                    if (rowsAffected > 0) {
-                        JOptionPane.showMessageDialog(CreateAccountClient.this, "Compte créé avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
-                        dispose(); // Fermer la fenêtre de création de compte
-                        new Login(); // Retourner à la page de login
-                    } else {
-                        JOptionPane.showMessageDialog(CreateAccountClient.this, "Erreur lors de la création du compte.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(CreateAccountClient.this, "Erreur de connexion à la base de données.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
         setVisible(true);
+    }
+    
+    private void createAccount() {
+        String nom = nomField.getText();
+        String prenom = prenomField.getText();
+        String email = emailField.getText();
+        String adresse = adresseField.getText();
+        String telephone = telephoneField.getText();
+        String password = new String(passwordField.getPassword());
+        String confirmPassword = new String(confirmPasswordField.getPassword());
+
+        // Vérifier si les mots de passe correspondent
+        if (!password.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "Les mots de passe ne correspondent pas.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Vérifier si tous les champs sont remplis
+        if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || adresse.isEmpty() || telephone.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tous les champs doivent être remplis.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (Connection conn = DBConnection.getConnection()) {
+            // Vérifier si l'email existe déjà
+            String sqlCheckEmail = "SELECT * FROM clients WHERE email = ?";
+            PreparedStatement stmtCheckEmail = conn.prepareStatement(sqlCheckEmail);
+            stmtCheckEmail.setString(1, email);
+            ResultSet rsCheckEmail = stmtCheckEmail.executeQuery();
+
+            if (rsCheckEmail.next()) {
+                JOptionPane.showMessageDialog(this, "Cet email est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Insérer le nouveau client dans la base de données
+            String sqlInsert = "INSERT INTO clients (nom, prenom, email, adresse, telephone, mot_de_passe) VALUES (?, ?, ?, ?, ?, ?)";
+            PreparedStatement stmtInsert = conn.prepareStatement(sqlInsert);
+            stmtInsert.setString(1, nom);
+            stmtInsert.setString(2, prenom);
+            stmtInsert.setString(3, email);
+            stmtInsert.setString(4, adresse);
+            stmtInsert.setString(5, telephone);
+            stmtInsert.setString(6, password);
+            int rowsAffected = stmtInsert.executeUpdate();
+
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, "Compte créé avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
+                dispose(); // Fermer la fenêtre de création de compte
+                new Login(); // Retourner à la page de login
+            } else {
+                JOptionPane.showMessageDialog(this, "Erreur lors de la création du compte.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur de connexion à la base de données.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     private JTextField createStyledTextField(JPanel panel, String labelText, int x, int y) {
