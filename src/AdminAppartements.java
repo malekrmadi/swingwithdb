@@ -152,12 +152,17 @@ public class AdminAppartements extends JFrame {
 
     private void loadAppartements(String filtre) {
         model.setRowCount(0);
-
         try (Connection conn = DBConnection.getConnection()) {
-            String query = "SELECT * FROM appartements WHERE nom LIKE ? OR ville LIKE ?";
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, "%" + filtre + "%");
-                stmt.setString(2, "%" + filtre + "%");
+            String sql = "SELECT * FROM appartements";
+            if (!filtre.isEmpty()) {
+                sql += " WHERE nom LIKE ? OR adresse LIKE ? OR ville LIKE ?";
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                if (!filtre.isEmpty()) {
+                    stmt.setString(1, "%" + filtre + "%");
+                    stmt.setString(2, "%" + filtre + "%");
+                    stmt.setString(3, "%" + filtre + "%");
+                }
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     Object[] row = new Object[12];
@@ -201,12 +206,13 @@ public class AdminAppartements extends JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, 
-                    "Erreur de chargement des appartements: " + e.getMessage(), 
+                    "Erreur lors du chargement des appartements: " + e.getMessage(), 
                     "Erreur", JOptionPane.ERROR_MESSAGE);
         }
 
         TableColumn actionCol = table.getColumn("Actions");
         actionCol.setCellRenderer(new ActionButtonRenderer());
+        actionCol.setCellEditor(new ActionButtonEditor(table));
     }
     
     private JButton createActionButton(String text, Color bgColor) {
@@ -477,6 +483,37 @@ public class AdminAppartements extends JFrame {
             }
             
             return new JLabel(value == null ? "" : value.toString());
+        }
+    }
+
+    // Editor for action buttons in the table
+    class ActionButtonEditor extends DefaultCellEditor {
+        private JPanel panel;
+
+        public ActionButtonEditor(JTable table) {
+            super(new JCheckBox());
+            panel = null;
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            if (value instanceof JPanel) {
+                panel = (JPanel) value;
+                panel.setBackground(new Color(230, 230, 230));
+                return panel;
+            }
+            return new JLabel(value == null ? "" : value.toString());
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return panel;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            return super.stopCellEditing();
         }
     }
 }

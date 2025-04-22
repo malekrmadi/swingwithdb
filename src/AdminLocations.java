@@ -151,10 +151,13 @@ public class AdminLocations extends JFrame {
     private void loadLocations(String filter) {
         model.setRowCount(0);
         try (Connection conn = DBConnection.getConnection()) {
-            String query = "SELECT l.*, c.nom AS client_nom, a.nom AS appart_nom FROM locations l " +
-                           "JOIN clients c ON l.client_id = c.client_id " +
-                           "JOIN appartements a ON l.appartement_id = a.appartement_id " +
-                           "WHERE c.nom LIKE ? OR a.nom LIKE ?";
+            String query = "SELECT l.*, " +
+                    "CONCAT(c.nom, ' ', c.prenom) as client_nom, " +
+                    "a.nom as appart_nom " +
+                    "FROM locations l " +
+                    "JOIN clients c ON l.client_id = c.client_id " +
+                    "JOIN appartements a ON l.appartement_id = a.appartement_id " +
+                    "WHERE c.nom LIKE ? OR a.nom LIKE ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, "%" + filter + "%");
                 stmt.setString(2, "%" + filter + "%");
@@ -202,6 +205,7 @@ public class AdminLocations extends JFrame {
 
         TableColumn actionCol = table.getColumn("Actions");
         actionCol.setCellRenderer(new ActionButtonRenderer());
+        actionCol.setCellEditor(new ActionButtonEditor(table));
     }
 
     private JButton createActionButton(String text, Color bgColor) {
@@ -407,6 +411,37 @@ public class AdminLocations extends JFrame {
             }
             
             return new JLabel(value == null ? "" : value.toString());
+        }
+    }
+
+    // Editor for action buttons in the table
+    class ActionButtonEditor extends DefaultCellEditor {
+        private JPanel panel;
+
+        public ActionButtonEditor(JTable table) {
+            super(new JCheckBox());
+            panel = null;
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            if (value instanceof JPanel) {
+                panel = (JPanel) value;
+                panel.setBackground(new Color(230, 230, 230));
+                return panel;
+            }
+            return new JLabel(value == null ? "" : value.toString());
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return panel;
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            return super.stopCellEditing();
         }
     }
 }
