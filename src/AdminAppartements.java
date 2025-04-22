@@ -171,7 +171,7 @@ public class AdminAppartements extends JFrame {
                     row[7] = rs.getBoolean("disponibilite") ? "Oui" : "Non";
                     row[8] = rs.getString("statut");
                     row[9] = rs.getDate("date_ajout");
-                    row[10] = rs.getDouble("note_moyenne");
+                    row[10] = rs.getDouble("rating");
 
                     int id = rs.getInt("appartement_id");
                     JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
