@@ -42,7 +42,7 @@ public class AdminStats extends JFrame {
         tabs.setBackground(Color.WHITE);
         tabs.setForeground(textColor);
         
-        tabs.add("Revenus Mensuels", new MonthlyRevenuePanel(primaryColor, lightColor, textColor, mainFont));
+        tabs.add("apparetment les plus demandées", new TopAppartmentsPanel(primaryColor, lightColor, textColor, mainFont));
         tabs.add("Meilleurs Clients", new TopClientsPanel(primaryColor, lightColor, textColor, mainFont));
         tabs.add("Occupation par Type", new ApartmentOccupancyPanel(primaryColor, lightColor, textColor, mainFont));
 
@@ -73,50 +73,89 @@ public class AdminStats extends JFrame {
     }
 }
 
-class MonthlyRevenuePanel extends JPanel {
-    private Map<String, Double> data = new LinkedHashMap<>();
-    private Color primaryColor;
-    private Color lightColor;
+class TopAppartmentsPanel extends JPanel {
+    private Map<String, Integer> data = new LinkedHashMap<>();
+    private JComboBox<String> cityFilter;
+    private Color backgroundColor;
+    private Color barColor;
+    private Color barBorderColor;
     private Color textColor;
     private Font mainFont;
-    private NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.FRANCE);
 
-    public MonthlyRevenuePanel(Color primaryColor, Color lightColor, Color textColor, Font mainFont) {
-        this.primaryColor = primaryColor;
-        this.lightColor = lightColor;
+    public TopAppartmentsPanel(Color primaryColor, Color lightColor, Color textColor, Font mainFont) {
+        this.backgroundColor = lightColor;
+        this.barColor = primaryColor;
+        this.barBorderColor = primaryColor.darker();
         this.textColor = textColor;
         this.mainFont = mainFont;
-        
-        setBackground(Color.WHITE);
+
+        setLayout(new BorderLayout());
+        setBackground(backgroundColor);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        fetchData();
+
+        cityFilter = new JComboBox<>();
+        cityFilter.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cityFilter.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fetchData((String) cityFilter.getSelectedItem());
+                repaint();
+            }
+        });
+
+        add(cityFilter, BorderLayout.NORTH);
+        fetchCities();
+        fetchData((String) cityFilter.getSelectedItem());
     }
 
-    private void fetchData() {
-        String query = """
-            SELECT MONTH(date_debut) AS mois, SUM(DATEDIFF(date_fin, date_debut) * a.prix_par_nuit) AS revenu
-            FROM locations l
-            JOIN appartements a ON l.appartement_id = a.appartement_id
-            GROUP BY mois
-            ORDER BY mois
-        """;
+    private void fetchCities() {
+        String query = "SELECT DISTINCT ville FROM appartements";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
 
+            cityFilter.addItem("Toutes les villes");
+
             while (rs.next()) {
-                int month = rs.getInt("mois");
-                double revenu = rs.getDouble("revenu");
-                data.put(getMonthName(month), revenu);
+                String city = rs.getString("ville");
+                cityFilter.addItem(city);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private String getMonthName(int month) {
-        return new String[]{"Janv", "Fév", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"}[month - 1];
+  private void fetchData(String selectedCity) {
+    data.clear();
+    String query = """
+        SELECT a.nom, COUNT(l.location_id) AS nb_locations
+        FROM locations l
+        JOIN appartements a ON l.appartement_id = a.appartement_id
+    """;
+    if (selectedCity != null && !selectedCity.equals("Toutes les villes")) {
+        query += " WHERE a.ville = ?";
     }
+    query += " GROUP BY a.appartement_id, a.nom ORDER BY nb_locations DESC LIMIT 5";
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(query)) {
+
+        if (selectedCity != null && !selectedCity.equals("Toutes les villes")) {
+            stmt.setString(1, selectedCity);
+        }
+
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                String apartmentName = rs.getString("nom"); // <-- Correct maintenant
+                int numberOfRentals = rs.getInt("nb_locations");
+                data.put(apartmentName, numberOfRentals);
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -128,97 +167,62 @@ class MonthlyRevenuePanel extends JPanel {
 
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
+
         int width = getWidth();
         int height = getHeight();
-        int marginLeft = 80;
-        int marginRight = 40;
+        int marginLeft = 150;
+        int marginRight = 50;
         int marginTop = 80;
         int marginBottom = 60;
         int chartWidth = width - marginLeft - marginRight;
-        int chartHeight = height - marginTop - marginBottom;
-        
-        // Draw chart title
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+        g2.setFont(new Font("Segoe UI", Font.BOLD, 20));
         g2.setColor(textColor);
-        g2.drawString("Revenus Mensuels (en €)", width / 2 - 120, 40);
-        
-        // Draw Y axis
-        g2.setColor(textColor);
-        g2.setStroke(new BasicStroke(2));
-        g2.drawLine(marginLeft, marginTop, marginLeft, height - marginBottom);
-        
-        // Draw X axis
-        g2.drawLine(marginLeft, height - marginBottom, marginLeft + chartWidth, height - marginBottom);
-        
-        // Draw bars
-        double max = Collections.max(data.values());
-        int barWidth = chartWidth / (data.size() * 2);
-        int x = marginLeft + barWidth;
-        
-        for (Map.Entry<String, Double> entry : data.entrySet()) {
-            double value = entry.getValue();
-            int barHeight = (int)(value / max * chartHeight);
-            
-            // Draw bar
-            GradientPaint gradient = new GradientPaint(
-                x, height - marginBottom - barHeight, 
-                primaryColor,
-                x, height - marginBottom,
-                primaryColor.darker()
-            );
-            g2.setPaint(gradient);
-            g2.fillRoundRect(x, height - marginBottom - barHeight, barWidth, barHeight, 10, 10);
-            
-            // Draw value
-            g2.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        g2.drawString("Top 5 Appartements les plus demandés", width / 2 - 180, 50);
+
+        int max = Collections.max(data.values());
+        int barHeight = 25;
+        int gap = 25;
+        int y = marginTop;
+
+        for (Map.Entry<String, Integer> entry : data.entrySet()) {
+            int value = entry.getValue();
+            int barWidth = (int)((double)value / max * chartWidth);
+
+            g2.setFont(mainFont);
             g2.setColor(textColor);
-            String valueStr = currencyFormatter.format(value);
-            FontMetrics fm = g2.getFontMetrics();
-            int textWidth = fm.stringWidth(valueStr);
-            g2.drawString(valueStr, x + barWidth/2 - textWidth/2, height - marginBottom - barHeight - 5);
-            
-            // Draw month
-            g2.setColor(textColor);
-            g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            textWidth = fm.stringWidth(entry.getKey());
-            g2.drawString(entry.getKey(), x + barWidth/2 - textWidth/2, height - marginBottom + 20);
-            
-            x += barWidth * 2;
-        }
-        
-        // Draw Y axis labels
-        g2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        g2.setColor(textColor);
-        
-        int numYLabels = 5;
-        for (int i = 0; i <= numYLabels; i++) {
-            int y = height - marginBottom - (i * chartHeight / numYLabels);
-            double value = (i * max / numYLabels);
-            g2.drawLine(marginLeft - 5, y, marginLeft, y);
-            String valueStr = currencyFormatter.format(value);
-            FontMetrics fm = g2.getFontMetrics();
-            int textWidth = fm.stringWidth(valueStr);
-            g2.drawString(valueStr, marginLeft - textWidth - 10, y + 5);
+            g2.drawString(entry.getKey(), marginLeft - 130, y + barHeight / 2 + 5);
+
+            g2.setColor(barColor);
+            g2.fillRoundRect(marginLeft, y, barWidth, barHeight, 10, 10);
+
+            g2.setColor(barBorderColor);
+            g2.drawRoundRect(marginLeft, y, barWidth, barHeight, 10, 10);
+
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            g2.drawString(value + " locations", marginLeft + 10, y + barHeight / 2 + 5);
+
+            y += barHeight + gap;
         }
     }
-    
+
     private void drawNoDataMessage(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
         g2.setColor(textColor);
-        g2.drawString("Aucune donnée disponible", getWidth()/2 - 100, getHeight()/2);
+        g2.drawString("Aucune donnée disponible", getWidth() / 2 - 100, getHeight() / 2);
     }
 }
 
+
 class TopClientsPanel extends JPanel {
-    private Map<String, Double> data = new LinkedHashMap<>();
+    private Map<String, Integer> data = new LinkedHashMap<>();
     private Color primaryColor;
     private Color lightColor;
     private Color textColor;
     private Font mainFont;
-    private NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.FRANCE);
 
     public TopClientsPanel(Color primaryColor, Color lightColor, Color textColor, Font mainFont) {
         this.primaryColor = primaryColor;
@@ -233,12 +237,11 @@ class TopClientsPanel extends JPanel {
 
     private void fetchData() {
         String query = """
-            SELECT c.nom, c.prenom, SUM(DATEDIFF(l.date_fin, l.date_debut) * a.prix_par_nuit) AS revenu
+            SELECT c.nom, c.prenom, COUNT(l.location_id) AS nombre_locations
             FROM locations l
             JOIN clients c ON l.client_id = c.client_id
-            JOIN appartements a ON l.appartement_id = a.appartement_id
             GROUP BY c.client_id
-            ORDER BY revenu DESC
+            ORDER BY nombre_locations DESC
             LIMIT 5
         """;
         try (Connection conn = DBConnection.getConnection();
@@ -247,7 +250,7 @@ class TopClientsPanel extends JPanel {
 
             while (rs.next()) {
                 String fullName = rs.getString("prenom") + " " + rs.getString("nom");
-                data.put(fullName, rs.getDouble("revenu"));
+                data.put(fullName, rs.getInt("nombre_locations"));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -277,7 +280,7 @@ class TopClientsPanel extends JPanel {
         // Draw chart title
         g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
         g2.setColor(textColor);
-        g2.drawString("Top 5 des Clients (Dépenses Totales)", width / 2 - 150, 40);
+        g2.drawString("Top 5 des Clients (Nombre de Locations)", width / 2 - 170, 40);
         
         // Draw Y axis
         g2.setColor(textColor);
@@ -288,15 +291,14 @@ class TopClientsPanel extends JPanel {
         g2.drawLine(marginLeft, height - marginBottom, marginLeft + chartWidth, height - marginBottom);
         
         // Draw bars
-        double max = Collections.max(data.values());
+        int max = Collections.max(data.values());
         int barHeight = 30;
         int gap = 20;
         int y = marginTop + gap;
-        int i = 0;
         
-        for (Map.Entry<String, Double> entry : data.entrySet()) {
-            double value = entry.getValue();
-            int barWidth = (int)(value / max * chartWidth);
+        for (Map.Entry<String, Integer> entry : data.entrySet()) {
+            int value = entry.getValue();
+            int barWidth = (int)((double)value / max * chartWidth);
             
             // Draw client name
             g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -304,7 +306,7 @@ class TopClientsPanel extends JPanel {
             g2.drawString(entry.getKey(), marginLeft - 190, y + barHeight/2 + 5);
             
             // Draw bar
-            Color barColor = new Color(52, 152, 219).darker(); // Blue
+            Color barColor = new Color(46, 204, 113).darker(); // Green
             g2.setColor(barColor);
             g2.fillRoundRect(marginLeft, y, barWidth, barHeight, 8, 8);
             
@@ -315,11 +317,10 @@ class TopClientsPanel extends JPanel {
             // Draw value
             g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
             g2.setColor(Color.WHITE);
-            String valueStr = currencyFormatter.format(value);
+            String valueStr = value + " locations";
             g2.drawString(valueStr, marginLeft + 10, y + barHeight/2 + 5);
             
             y += barHeight + gap;
-            i++;
         }
     }
     
@@ -468,3 +469,10 @@ class ApartmentOccupancyPanel extends JPanel {
         g2.drawString("Aucune donnée disponible", getWidth()/2 - 100, getHeight()/2);
     }
 }
+
+
+////
+
+
+
+///
