@@ -73,14 +73,17 @@ public class AdminStats extends JFrame {
     }
 }
 
+
+
+
 class TopAppartmentsPanel extends JPanel {
     private Map<String, Integer> data = new LinkedHashMap<>();
-    private JComboBox<String> cityFilter;
     private Color backgroundColor;
     private Color barColor;
     private Color barBorderColor;
     private Color textColor;
     private Font mainFont;
+    private JComboBox<String> cityFilter;
 
     public TopAppartmentsPanel(Color primaryColor, Color lightColor, Color textColor, Font mainFont) {
         this.backgroundColor = lightColor;
@@ -89,21 +92,27 @@ class TopAppartmentsPanel extends JPanel {
         this.textColor = textColor;
         this.mainFont = mainFont;
 
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
         setBackground(backgroundColor);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        topPanel.setBackground(backgroundColor);
+
         cityFilter = new JComboBox<>();
-        cityFilter.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cityFilter.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fetchData((String) cityFilter.getSelectedItem());
-                repaint();
-            }
+        cityFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cityFilter.setPreferredSize(new Dimension(180, 30));
+        cityFilter.setFocusable(false);
+        cityFilter.setBackground(Color.WHITE);
+        cityFilter.setBorder(BorderFactory.createLineBorder(primaryColor, 1, true));
+        cityFilter.addActionListener(e -> {
+            fetchData((String) cityFilter.getSelectedItem());
+            repaint();
         });
 
-        add(cityFilter, BorderLayout.NORTH);
+        topPanel.add(cityFilter);
+        add(topPanel, BorderLayout.NORTH);
+
         fetchCities();
         fetchData((String) cityFilter.getSelectedItem());
     }
@@ -118,44 +127,45 @@ class TopAppartmentsPanel extends JPanel {
 
             while (rs.next()) {
                 String city = rs.getString("ville");
-                cityFilter.addItem(city);
+                if (city != null && !city.trim().isEmpty()) {
+                    cityFilter.addItem(city);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-  private void fetchData(String selectedCity) {
-    data.clear();
-    String query = """
-        SELECT a.nom, COUNT(l.location_id) AS nb_locations
-        FROM locations l
-        JOIN appartements a ON l.appartement_id = a.appartement_id
-    """;
-    if (selectedCity != null && !selectedCity.equals("Toutes les villes")) {
-        query += " WHERE a.ville = ?";
-    }
-    query += " GROUP BY a.appartement_id, a.nom ORDER BY nb_locations DESC LIMIT 5";
-
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(query)) {
-
+    private void fetchData(String selectedCity) {
+        data.clear();
+        String query = """
+            SELECT a.nom, COUNT(l.location_id) AS nb_locations
+            FROM locations l
+            JOIN appartements a ON l.appartement_id = a.appartement_id
+        """;
         if (selectedCity != null && !selectedCity.equals("Toutes les villes")) {
-            stmt.setString(1, selectedCity);
+            query += " WHERE a.ville = ?";
         }
+        query += " GROUP BY a.appartement_id, a.nom ORDER BY nb_locations DESC, a.nom ASC LIMIT 5";
 
-        try (ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                String apartmentName = rs.getString("nom"); // <-- Correct maintenant
-                int numberOfRentals = rs.getInt("nb_locations");
-                data.put(apartmentName, numberOfRentals);
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            if (selectedCity != null && !selectedCity.equals("Toutes les villes")) {
+                stmt.setString(1, selectedCity);
             }
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
 
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String apartmentName = rs.getString("nom");
+                    int numberOfRentals = rs.getInt("nb_locations");
+                    data.put(apartmentName, numberOfRentals);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -170,37 +180,43 @@ class TopAppartmentsPanel extends JPanel {
 
         int width = getWidth();
         int height = getHeight();
-        int marginLeft = 150;
-        int marginRight = 50;
-        int marginTop = 80;
+        int marginLeft = 180;
+        int marginRight = 80;
+        int marginTop = 90;
         int marginBottom = 60;
         int chartWidth = width - marginLeft - marginRight;
 
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        // Title
+        g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
         g2.setColor(textColor);
-        g2.drawString("Top 5 Appartements les plus demandés", width / 2 - 180, 50);
+        g2.drawString("Top 5 Appartements les plus demandés", width / 2 - 200, 50);
 
+        // Y axis values
         int max = Collections.max(data.values());
-        int barHeight = 25;
-        int gap = 25;
+        int barHeight = 30;
+        int gap = 20;
         int y = marginTop;
 
         for (Map.Entry<String, Integer> entry : data.entrySet()) {
             int value = entry.getValue();
-            int barWidth = (int)((double)value / max * chartWidth);
+            int barWidth = (int) ((double) value / max * chartWidth);
 
-            g2.setFont(mainFont);
+            // Apartment name
+            g2.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             g2.setColor(textColor);
-            g2.drawString(entry.getKey(), marginLeft - 130, y + barHeight / 2 + 5);
+            g2.drawString(entry.getKey(), marginLeft - 150, y + barHeight / 2 + 5);
 
+            // Bar
             g2.setColor(barColor);
-            g2.fillRoundRect(marginLeft, y, barWidth, barHeight, 10, 10);
+            g2.fillRoundRect(marginLeft, y, barWidth, barHeight, 12, 12);
 
+            // Border
             g2.setColor(barBorderColor);
-            g2.drawRoundRect(marginLeft, y, barWidth, barHeight, 10, 10);
+            g2.drawRoundRect(marginLeft, y, barWidth, barHeight, 12, 12);
 
-            g2.setColor(Color.WHITE);
+            // Value inside bar
             g2.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            g2.setColor(Color.WHITE);
             g2.drawString(value + " locations", marginLeft + 10, y + barHeight / 2 + 5);
 
             y += barHeight + gap;
