@@ -73,7 +73,7 @@ public class AdminLocations extends JFrame {
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 15, 15));
 
-        String[] columns = {"ID", "Client", "Appartement", "Date début", "Date fin", "Pénalité", "Personnes", "Actions"};
+        String[] columns = {"ID", "Client", "Appartement", "Date debut", "Date fin", "Penalite", "Personnes", "Actions"};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -225,7 +225,7 @@ public class AdminLocations extends JFrame {
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, id);
                 stmt.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Location supprimée avec succès.", 
+                JOptionPane.showMessageDialog(this, "Location supprimée avec succes.", 
                         "Suppression", JOptionPane.INFORMATION_MESSAGE);
                 loadLocations("");
             }
@@ -286,9 +286,9 @@ public class AdminLocations extends JFrame {
         // Create form sections
         addFormField(formPanel, "ID du Client:", clientIdField);
         addFormField(formPanel, "ID de l'Appartement:", appartIdField);
-        addFormField(formPanel, "Date de début (YYYY-MM-DD):", dateDebutField);
+        addFormField(formPanel, "Date de debut (YYYY-MM-DD):", dateDebutField);
         addFormField(formPanel, "Date de fin (YYYY-MM-DD):", dateFinField);
-        addFormField(formPanel, "Pénalité retard (€):", penaliteField);
+        addFormField(formPanel, "Penalite retard (€):", penaliteField);
         addFormField(formPanel, "Nombre de personnes:", personnesField);
 
         // Buttons panel
@@ -321,7 +321,7 @@ public class AdminLocations extends JFrame {
                 Integer.parseInt(personnesField.getText());
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(dialog, 
-                        "Veuillez vérifier le format des données saisies.", 
+                        "Veuillez verifier le format des donnees saisies.", 
                         "Erreur de format", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -352,8 +352,8 @@ public class AdminLocations extends JFrame {
                     dialog.dispose();
                     loadLocations("");
                     JOptionPane.showMessageDialog(this, 
-                            rs == null ? "Location ajoutée avec succès!" : "Location mise à jour avec succès!", 
-                            "Succès", JOptionPane.INFORMATION_MESSAGE);
+                            rs == null ? "Location ajoutee avec succes!" : "Location mise e jour avec succes!", 
+                            "Succes", JOptionPane.INFORMATION_MESSAGE);
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();

@@ -71,7 +71,7 @@ public class AdminAppartements extends JFrame {
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 15, 15));
 
-        String[] columns = {"ID", "Nom", "Adresse", "Ville", "Type", "Capacité", "Prix", "Disponible", "Statut", "Date Ajout", "Note", "Actions"};
+        String[] columns = {"ID", "Nom", "Adresse", "Ville", "Type", "Capacite", "Prix", "Disponible", "Statut", "Date Ajout", "Note", "Actions"};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -242,7 +242,7 @@ public class AdminAppartements extends JFrame {
                     
                     if (locationCount > 0) {
                         int confirm = JOptionPane.showConfirmDialog(this, 
-                                "Cet appartement a " + locationCount + " location(s). La suppression échouera à moins de supprimer ces locations. Continuer?", 
+                                "Cet appartement a " + locationCount + " location(s). La suppression echouera à moins de supprimer ces locations. Continuer?", 
                                 "Attention", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                         
                         if (confirm != JOptionPane.YES_OPTION) {
@@ -257,7 +257,7 @@ public class AdminAppartements extends JFrame {
                     stmt.setInt(1, id);
                     stmt.executeUpdate();
                     conn.commit();
-                    JOptionPane.showMessageDialog(this, "Appartement supprimé avec succès.");
+                    JOptionPane.showMessageDialog(this, "Appartement supprime avec succes.");
                     loadAppartements("");
                 }
             } catch (SQLException e) {
@@ -279,45 +279,37 @@ public class AdminAppartements extends JFrame {
         dialog.setSize(500, 550);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
-        
-        // Form panel with stylish look
+
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
 
-        // Form fields
         JTextField nom = createTextField();
         JTextField adresse = createTextField();
         JTextField ville = createTextField();
-        JTextField type = createTextField();
         JTextField capacite = createTextField();
         JTextField prix = createTextField();
-        
-        JCheckBox dispo = new JCheckBox("Disponible");
-        dispo.setFont(mainFont);
-        dispo.setBackground(Color.WHITE);
-        
+
+        // Type dropdown
+        String[] typeOptions = {"studio", "villa", "duplex"};
+        JComboBox<String> type = new JComboBox<>(typeOptions);
+        type.setFont(mainFont);
+        type.setBackground(Color.WHITE);
+
+        // Statut dropdown
         String[] statutOptions = {"disponible", "en_renovation", "en_maintenance"};
         JComboBox<String> statut = new JComboBox<>(statutOptions);
         statut.setFont(mainFont);
         statut.setBackground(Color.WHITE);
-        
-        // Create form sections
+
         addFormField(formPanel, "Nom:", nom);
         addFormField(formPanel, "Adresse:", adresse);
         addFormField(formPanel, "Ville:", ville);
         addFormField(formPanel, "Type:", type);
-        addFormField(formPanel, "Capacité:", capacite);
-        addFormField(formPanel, "Prix par nuit (€):", prix);
-        
-        JPanel dispoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        dispoPanel.setBackground(Color.WHITE);
-        dispoPanel.add(dispo);
-        
+        addFormField(formPanel, "Capacite:", capacite);
+        addFormField(formPanel, "Prix par nuit :", prix);
         addFormField(formPanel, "Statut:", statut);
-        formPanel.add(dispoPanel);
-        formPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
         // Load appartement data if editing
         if (appartementId != null) {
@@ -330,29 +322,25 @@ public class AdminAppartements extends JFrame {
                         nom.setText(rs.getString("nom"));
                         adresse.setText(rs.getString("adresse"));
                         ville.setText(rs.getString("ville"));
-                        type.setText(rs.getString("type_appartement"));
+                        type.setSelectedItem(rs.getString("type_appartement"));
                         capacite.setText(String.valueOf(rs.getInt("capacite")));
                         prix.setText(String.valueOf(rs.getDouble("prix_par_nuit")));
-                        dispo.setSelected(rs.getBoolean("disponibilite"));
                         statut.setSelectedItem(rs.getString("statut"));
                     }
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(dialog, 
-                        "Erreur lors du chargement des données: " + e.getMessage(), 
+                        "Erreur lors du chargement des donnees: " + e.getMessage(), 
                         "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            // Default values for new appartement
             statut.setSelectedItem("disponible");
-            dispo.setSelected(true);
         }
 
-        // Buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
-        
+
         JButton cancelBtn = new JButton("Annuler");
         cancelBtn.setFont(mainFont);
         cancelBtn.setBackground(lightColor);
@@ -360,69 +348,67 @@ public class AdminAppartements extends JFrame {
         cancelBtn.setFocusPainted(false);
         cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         cancelBtn.addActionListener(e -> dialog.dispose());
-        
+
         JButton saveButton = new JButton("Enregistrer");
         saveButton.setFont(mainFont);
         saveButton.setBackground(accentColor);
         saveButton.setForeground(Color.WHITE);
         saveButton.setFocusPainted(false);
         saveButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        
+
         saveButton.addActionListener(e -> {
-            // Validate form
-            if (nom.getText().isEmpty() || adresse.getText().isEmpty() || ville.getText().isEmpty() || type.getText().isEmpty()) {
+            if (nom.getText().isEmpty() || adresse.getText().isEmpty() || ville.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, "Veuillez remplir tous les champs obligatoires.", 
                         "Champs manquants", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             try {
                 int capaciteValue = Integer.parseInt(capacite.getText());
                 if (capaciteValue <= 0) {
-                    JOptionPane.showMessageDialog(dialog, "La capacité doit être un nombre positif.", 
+                    JOptionPane.showMessageDialog(dialog, "La capacite doit être un nombre positif.", 
                             "Valeur incorrecte", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "La capacité doit être un nombre entier.", 
+                JOptionPane.showMessageDialog(dialog, "La capacite doit être un nombre entier.", 
                         "Valeur incorrecte", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             try {
                 double prixValue = Double.parseDouble(prix.getText());
                 if (prixValue <= 0) {
-                    JOptionPane.showMessageDialog(dialog, "Le prix doit être un nombre positif.", 
+                    JOptionPane.showMessageDialog(dialog, "Le prix doit etre un nombre positif.", 
                             "Valeur incorrecte", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Le prix doit être un nombre décimal.", 
+                JOptionPane.showMessageDialog(dialog, "Le prix doit etre un nombre decimal.", 
                         "Valeur incorrecte", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             try (Connection conn = DBConnection.getConnection()) {
                 String sql;
                 if (appartementId == null) {
-                    sql = "INSERT INTO appartements (nom, adresse, ville, type_appartement, capacite, prix_par_nuit, disponibilite, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    sql = "INSERT INTO appartements (nom, adresse, ville, type_appartement, capacite, prix_par_nuit, statut) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 } else {
-                    sql = "UPDATE appartements SET nom=?, adresse=?, ville=?, type_appartement=?, capacite=?, prix_par_nuit=?, disponibilite=?, statut=? WHERE appartement_id=?";
+                    sql = "UPDATE appartements SET nom=?, adresse=?, ville=?, type_appartement=?, capacite=?, prix_par_nuit=?, statut=? WHERE appartement_id=?";
                 }
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, nom.getText());
                     stmt.setString(2, adresse.getText());
                     stmt.setString(3, ville.getText());
-                    stmt.setString(4, type.getText());
+                    stmt.setString(4, (String) type.getSelectedItem());
                     stmt.setInt(5, Integer.parseInt(capacite.getText()));
                     stmt.setDouble(6, Double.parseDouble(prix.getText()));
-                    stmt.setBoolean(7, dispo.isSelected());
-                    stmt.setString(8, (String) statut.getSelectedItem());
-                    if (appartementId != null) stmt.setInt(9, appartementId);
+                    stmt.setString(7, (String) statut.getSelectedItem());
+                    if (appartementId != null) stmt.setInt(8, appartementId);
 
                     stmt.executeUpdate();
                     JOptionPane.showMessageDialog(dialog, 
-                            appartementId == null ? "Appartement ajouté avec succès!" : "Appartement mis à jour avec succès!", 
+                            appartementId == null ? "Appartement ajoute avec succes!" : "Appartement mis e jour avec succes!", 
                             "Succès", JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                     loadAppartements("");
@@ -443,6 +429,8 @@ public class AdminAppartements extends JFrame {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
+
+
     
     private JTextField createTextField() {
         JTextField field = new JTextField();

@@ -71,7 +71,7 @@ public class AdminClients extends JFrame {
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 15, 15));
         
-        String[] columns = {"ID", "Nom", "Prénom", "Email", "Téléphone", "Adresse", "Statut", "Fidélité", "Points", "Actions"};
+        String[] columns = {"ID", "Nom", "Prenom", "Email", "Telephone", "Adresse", "Statut", "Fidelite", "Points", "Actions"};
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -183,7 +183,7 @@ public class AdminClients extends JFrame {
                     updateBtn.addActionListener(e -> showClientForm(clientId));
                     deleteBtn.addActionListener(e -> {
                         int confirm = JOptionPane.showConfirmDialog(this, 
-                                "Êtes-vous sûr de vouloir supprimer ce client ?", 
+                                "Etes-vous sUr de vouloir supprimer ce client ?", 
                                 "Confirmation de suppression", 
                                 JOptionPane.YES_NO_OPTION, 
                                 JOptionPane.WARNING_MESSAGE);
@@ -225,7 +225,7 @@ public class AdminClients extends JFrame {
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
         
-        // Form panel with stylish look
+        // Form panel
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBackground(Color.WHITE);
@@ -244,33 +244,14 @@ public class AdminClients extends JFrame {
         
         JTextField telephone = createTextField();
         JTextField adresse = createTextField();
-        
-        String[] statutOptions = {"actif", "inactif", "banni"};
-        JComboBox<String> statut = new JComboBox<>(statutOptions);
-        statut.setFont(mainFont);
-        statut.setBackground(Color.WHITE);
-        
-        JCheckBox fidele = new JCheckBox("Client fidèle");
-        fidele.setFont(mainFont);
-        fidele.setBackground(Color.WHITE);
-        
-        JTextField points = createTextField();
-        
+
         // Create form sections
         addFormField(formPanel, "Nom:", nom);
-        addFormField(formPanel, "Prénom:", prenom);
+        addFormField(formPanel, "Prenom:", prenom);
         addFormField(formPanel, "Email:", email);
         addFormField(formPanel, "Mot de passe:", motDePasse);
-        addFormField(formPanel, "Téléphone:", telephone);
+        addFormField(formPanel, "Telephone:", telephone);
         addFormField(formPanel, "Adresse:", adresse);
-        addFormField(formPanel, "Statut:", statut);
-        addFormField(formPanel, "Points fidélité:", points);
-        
-        JPanel fidelePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        fidelePanel.setBackground(Color.WHITE);
-        fidelePanel.add(fidele);
-        formPanel.add(fidelePanel);
-        formPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
         // Load client data if editing
         if (clientId != null) {
@@ -285,20 +266,13 @@ public class AdminClients extends JFrame {
                     motDePasse.setText(rs.getString("mot_de_passe"));
                     telephone.setText(rs.getString("telephone"));
                     adresse.setText(rs.getString("adresse"));
-                    statut.setSelectedItem(rs.getString("statut") != null ? rs.getString("statut") : "actif");
-                    points.setText(String.valueOf(rs.getInt("points_fidelite")));
-                    fidele.setSelected(rs.getBoolean("client_fidele"));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(dialog, 
-                        "Erreur lors du chargement des données client: " + e.getMessage(), 
+                        "Erreur lors du chargement des donnees client: " + e.getMessage(), 
                         "Erreur", JOptionPane.ERROR_MESSAGE);
             }
-        } else {
-            // Default values for new client
-            points.setText("0");
-            statut.setSelectedItem("actif");
         }
 
         // Buttons panel
@@ -319,7 +293,7 @@ public class AdminClients extends JFrame {
         saveBtn.setForeground(Color.WHITE);
         saveBtn.setFocusPainted(false);
         saveBtn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        
+
         saveBtn.addActionListener(e -> {
             // Validate form
             if (nom.getText().isEmpty() || prenom.getText().isEmpty() || email.getText().isEmpty() 
@@ -329,25 +303,12 @@ public class AdminClients extends JFrame {
                 return;
             }
             
-            try {
-                int pointsValue = Integer.parseInt(points.getText());
-                if (pointsValue < 0) {
-                    JOptionPane.showMessageDialog(dialog, "Les points doivent être un nombre positif.", 
-                            "Valeur incorrecte", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Les points doivent être un nombre entier.", 
-                        "Valeur incorrecte", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
             try (Connection conn = DBConnection.getConnection()) {
                 String sql;
                 if (clientId == null) {
-                    sql = "INSERT INTO clients(nom, prenom, email, mot_de_passe, telephone, adresse, statut, points_fidelite, client_fidele) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    sql = "INSERT INTO clients(nom, prenom, email, mot_de_passe, telephone, adresse) VALUES (?, ?, ?, ?, ?, ?)";
                 } else {
-                    sql = "UPDATE clients SET nom=?, prenom=?, email=?, mot_de_passe=?, telephone=?, adresse=?, statut=?, points_fidelite=?, client_fidele=? WHERE client_id=?";
+                    sql = "UPDATE clients SET nom=?, prenom=?, email=?, mot_de_passe=?, telephone=?, adresse=? WHERE client_id=?";
                 }
 
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -357,17 +318,14 @@ public class AdminClients extends JFrame {
                 stmt.setString(4, new String(motDePasse.getPassword()));
                 stmt.setString(5, telephone.getText());
                 stmt.setString(6, adresse.getText());
-                stmt.setString(7, (String) statut.getSelectedItem());
-                stmt.setInt(8, Integer.parseInt(points.getText()));
-                stmt.setBoolean(9, fidele.isSelected());
-                if (clientId != null) stmt.setInt(10, clientId);
+                if (clientId != null) stmt.setInt(7, clientId);
 
                 stmt.executeUpdate();
                 dialog.dispose();
                 loadClients("");
                 
                 JOptionPane.showMessageDialog(this, 
-                        clientId == null ? "Client ajouté avec succès!" : "Client mis à jour avec succès!", 
+                        clientId == null ? "Client ajoute avec succes!" : "Client mis a jour avec succes!", 
                         "Succès", JOptionPane.INFORMATION_MESSAGE);
                 
             } catch (SQLException ex) {
@@ -386,6 +344,7 @@ public class AdminClients extends JFrame {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
+
 
     private JTextField createTextField() {
         JTextField field = new JTextField();
