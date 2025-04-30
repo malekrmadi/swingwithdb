@@ -239,17 +239,15 @@ public class AdminLocations extends JFrame {
 
     private void openLocationForm(ResultSet rs) {
         JDialog dialog = new JDialog(this, "Gestion de Location", true);
-        dialog.setSize(500, 400);
+        dialog.setSize(500, 500);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
-        
-        // Form panel with stylish look
+
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
 
-        // Form title
         JLabel titleLabel = new JLabel(rs == null ? "Ajouter une location" : "Modifier une location");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLabel.setForeground(textColor);
@@ -257,111 +255,131 @@ public class AdminLocations extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         formPanel.add(titleLabel);
 
-        // Form fields
-        JTextField clientIdField = createTextField();
-        JTextField appartIdField = createTextField();
+        JComboBox<Integer> clientCombo = new JComboBox<>();
+        JComboBox<Integer> appartCombo = new JComboBox<>();
+
+        try (Connection conn = DBConnection.getConnection();
+            Statement stmt1 = conn.createStatement();
+            Statement stmt2 = conn.createStatement();
+            ResultSet rs1 = stmt1.executeQuery("SELECT client_id FROM clients");
+            ResultSet rs2 = stmt2.executeQuery("SELECT appartement_id FROM appartements")) {
+            while (rs1.next()) clientCombo.addItem(rs1.getInt("client_id"));
+            while (rs2.next()) appartCombo.addItem(rs2.getInt("appartement_id"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         JTextField dateDebutField = createTextField();
-        dateDebutField.setText("YYYY-MM-DD");
         JTextField dateFinField = createTextField();
-        dateFinField.setText("YYYY-MM-DD");
-        JTextField penaliteField = createTextField();
         JTextField personnesField = createTextField();
 
         try {
             if (rs != null) {
-                clientIdField.setText(rs.getString("client_id"));
-                appartIdField.setText(rs.getString("appartement_id"));
+                clientCombo.setSelectedItem(rs.getInt("client_id"));
+                appartCombo.setSelectedItem(rs.getInt("appartement_id"));
                 dateDebutField.setText(rs.getString("date_debut"));
                 dateFinField.setText(rs.getString("date_fin"));
-                penaliteField.setText(rs.getString("penalite_retard"));
                 personnesField.setText(rs.getString("nombre_personnes"));
             } else {
-                penaliteField.setText("0.00");
                 personnesField.setText("1");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        // Create form sections
-        addFormField(formPanel, "ID du Client:", clientIdField);
-        addFormField(formPanel, "ID de l'Appartement:", appartIdField);
-        addFormField(formPanel, "Date de debut (YYYY-MM-DD):", dateDebutField);
-        addFormField(formPanel, "Date de fin (YYYY-MM-DD):", dateFinField);
-        addFormField(formPanel, "Penalite retard (€):", penaliteField);
+        addFormField(formPanel, "ID du Client:", clientCombo);
+        addFormField(formPanel, "ID de l'Appartement:", appartCombo);
+        addFormField(formPanel, "Date de début (yyyy-MM-dd):", dateDebutField);
+        addFormField(formPanel, "Date de fin (yyyy-MM-dd):", dateFinField);
         addFormField(formPanel, "Nombre de personnes:", personnesField);
 
-        // Buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
-        
+
         JButton cancelBtn = new JButton("Annuler");
         cancelBtn.setFont(mainFont);
         cancelBtn.setBackground(lightColor);
         cancelBtn.setForeground(textColor);
-        cancelBtn.setFocusPainted(false);
-        cancelBtn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         cancelBtn.addActionListener(e -> dialog.dispose());
-        
+
         JButton saveButton = new JButton("Enregistrer");
         saveButton.setFont(mainFont);
         saveButton.setBackground(accentColor);
         saveButton.setForeground(Color.WHITE);
-        saveButton.setFocusPainted(false);
-        saveButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        
+
         saveButton.addActionListener(e -> {
-            // Validate form
-            try {
-                Integer.parseInt(clientIdField.getText());
-                Integer.parseInt(appartIdField.getText());
-                Date.valueOf(dateDebutField.getText());
-                Date.valueOf(dateFinField.getText());
-                new java.math.BigDecimal(penaliteField.getText());
-                Integer.parseInt(personnesField.getText());
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(dialog, 
-                        "Veuillez verifier le format des donnees saisies.", 
-                        "Erreur de format", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
             try (Connection conn = DBConnection.getConnection()) {
+                int clientId = (Integer) clientCombo.getSelectedItem();
+                int appartId = (Integer) appartCombo.getSelectedItem();
+                String dateDebutStr = dateDebutField.getText();
+                String dateFinStr = dateFinField.getText();
+                int personnes = Integer.parseInt(personnesField.getText());
+
+                // Vérifier capacité
+                PreparedStatement stmtCap = conn.prepareStatement("SELECT capacite FROM appartements WHERE appartement_id = ?");
+                stmtCap.setInt(1, appartId);
+                ResultSet rsCap = stmtCap.executeQuery();
+                if (rsCap.next()) {
+                    int capacite = rsCap.getInt("capacite");
+                    if (personnes > capacite) {
+                        JOptionPane.showMessageDialog(dialog, "Le nombre de personnes dépasse la capacité de l'appartement (" + capacite + ").", "Erreur", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+
+                // Vérifier disponibilité de l'appartement
+                String dispoQuery = "SELECT * FROM locations WHERE appartement_id = ? AND (" +
+                        "(date_debut <= ? AND date_fin >= ?) OR (date_debut <= ? AND date_fin >= ?) OR (? <= date_debut AND ? >= date_fin))";
+                if (rs != null) {
+                    dispoQuery += " AND location_id != ?";
+                }
+
+                PreparedStatement stmtDispo = conn.prepareStatement(dispoQuery);
+                stmtDispo.setInt(1, appartId);
+                stmtDispo.setDate(2, Date.valueOf(dateFinStr));
+                stmtDispo.setDate(3, Date.valueOf(dateFinStr));
+                stmtDispo.setDate(4, Date.valueOf(dateDebutStr));
+                stmtDispo.setDate(5, Date.valueOf(dateDebutStr));
+                stmtDispo.setDate(6, Date.valueOf(dateDebutStr));
+                stmtDispo.setDate(7, Date.valueOf(dateFinStr));
+                if (rs != null) {
+                    stmtDispo.setInt(8, rs.getInt("location_id")); // Exclure la location en cours d'édition
+                }
+
+                ResultSet rsDispo = stmtDispo.executeQuery();
+                if (rsDispo.next()) {
+                    JOptionPane.showMessageDialog(dialog, "L'appartement est déjà réservé sur cette période.", "Indisponible", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Insérer ou mettre à jour
                 String sql;
                 if (rs == null) {
-                    sql = "INSERT INTO locations (client_id, appartement_id, date_debut, date_fin, penalite_retard, nombre_personnes) " +
-                          "VALUES (?, ?, ?, ?, ?, ?)";
+                    sql = "INSERT INTO locations (client_id, appartement_id, date_debut, date_fin, nombre_personnes) VALUES (?, ?, ?, ?, ?)";
                 } else {
-                    sql = "UPDATE locations SET client_id=?, appartement_id=?, date_debut=?, date_fin=?, penalite_retard=?, " +
-                          "nombre_personnes=? WHERE location_id=?";
+                    sql = "UPDATE locations SET client_id=?, appartement_id=?, date_debut=?, date_fin=?, nombre_personnes=? WHERE location_id=?";
                 }
-                
+
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setInt(1, Integer.parseInt(clientIdField.getText()));
-                    stmt.setInt(2, Integer.parseInt(appartIdField.getText()));
-                    stmt.setDate(3, Date.valueOf(dateDebutField.getText()));
-                    stmt.setDate(4, Date.valueOf(dateFinField.getText()));
-                    stmt.setBigDecimal(5, new java.math.BigDecimal(penaliteField.getText()));
-                    stmt.setInt(6, Integer.parseInt(personnesField.getText()));
-                    
-                    if (rs != null) {
-                        stmt.setInt(7, rs.getInt("location_id"));
-                    }
-                    
+                    stmt.setInt(1, clientId);
+                    stmt.setInt(2, appartId);
+                    stmt.setDate(3, Date.valueOf(dateDebutStr));
+                    stmt.setDate(4, Date.valueOf(dateFinStr));
+                    stmt.setInt(5, personnes);
+                    if (rs != null) stmt.setInt(6, rs.getInt("location_id"));
                     stmt.executeUpdate();
+
                     dialog.dispose();
                     loadLocations("");
-                    JOptionPane.showMessageDialog(this, 
-                            rs == null ? "Location ajoutee avec succes!" : "Location mise e jour avec succes!", 
-                            "Succes", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, rs == null ? "Location ajoutée avec succès!" : "Location mise à jour avec succès!", "Succès", JOptionPane.INFORMATION_MESSAGE);
                 }
-            } catch (SQLException ex) {
+
+            } catch (Exception ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(dialog, 
-                        "Erreur lors de l'enregistrement: " + ex.getMessage(), 
-                        "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         });
+
 
         buttonPanel.add(cancelBtn);
         buttonPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -371,6 +389,7 @@ public class AdminLocations extends JFrame {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
+
     
     private JTextField createTextField() {
         JTextField field = new JTextField();
