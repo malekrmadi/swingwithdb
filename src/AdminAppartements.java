@@ -23,17 +23,15 @@ public class AdminAppartements extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
 
-        // Header panel
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(accentColor);
         headerPanel.setPreferredSize(new Dimension(800, 70));
         headerPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 15));
-        
+
         JLabel titleLabel = new JLabel("Gestion des Appartements");
         titleLabel.setFont(headerFont);
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel);
-        
         add(headerPanel, BorderLayout.NORTH);
 
         // Search panel
@@ -41,32 +39,43 @@ public class AdminAppartements extends JFrame {
         searchPanel.setBackground(Color.WHITE);
         searchPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         searchPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        
+
+        JLabel searchLabel = new JLabel("Rechercher: ");
+        searchLabel.setFont(mainFont);
+        searchLabel.setForeground(textColor);
+
         JTextField searchField = new JTextField(20);
         searchField.setFont(mainFont);
         searchField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(189, 195, 199)),
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
-        
+
         JButton searchButton = new JButton("Rechercher");
         searchButton.setFont(mainFont);
         searchButton.setBackground(primaryColor);
         searchButton.setForeground(Color.WHITE);
         searchButton.setFocusPainted(false);
         searchButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
-        
-        JLabel searchLabel = new JLabel("Rechercher: ");
-        searchLabel.setFont(mainFont);
-        searchLabel.setForeground(textColor);
-        
+
+        JLabel statutLabel = new JLabel("Statut:");
+        statutLabel.setFont(mainFont);
+        statutLabel.setForeground(textColor);
+
+        String[] statutOptions = {"Tous", "Disponible", "en_renovation", "en_maintenance"};
+        JComboBox<String> statutFilter = new JComboBox<>(statutOptions);
+        statutFilter.setFont(mainFont);
+
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
+        searchPanel.add(Box.createHorizontalStrut(10));
+        searchPanel.add(statutLabel);
+        searchPanel.add(statutFilter);
+        searchPanel.add(Box.createHorizontalStrut(10));
         searchPanel.add(searchButton);
-        
-        add(searchPanel, BorderLayout.NORTH);
+        add(searchPanel, BorderLayout.BEFORE_FIRST_LINE);
 
-        // Main table panel
+        // Table panel
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 15, 15));
@@ -75,7 +84,7 @@ public class AdminAppartements extends JFrame {
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 11; // Only allow editing for the Actions column
+                return column == 11;
             }
         };
 
@@ -86,33 +95,30 @@ public class AdminAppartements extends JFrame {
         table.setSelectionForeground(textColor);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        
-        // Custom header renderer
+
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(lightColor);
         header.setForeground(textColor);
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(189, 195, 199)));
-        
-        // Set column widths
-        table.getColumnModel().getColumn(0).setMaxWidth(50); // ID column
-        table.getColumnModel().getColumn(5).setMaxWidth(80); // Capacité column
-        table.getColumnModel().getColumn(7).setMaxWidth(80); // Disponible column
-        table.getColumnModel().getColumn(10).setMaxWidth(60); // Note column
-        
+
+        table.getColumnModel().getColumn(0).setMaxWidth(50);
+        table.getColumnModel().getColumn(5).setMaxWidth(80);
+        table.getColumnModel().getColumn(7).setMaxWidth(80);
+        table.getColumnModel().getColumn(10).setMaxWidth(60);
+
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getViewport().setBackground(Color.WHITE);
-        
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         add(tablePanel, BorderLayout.CENTER);
 
-        // Footer panel
+        // Footer
         JPanel footerPanel = new JPanel();
         footerPanel.setBackground(lightColor);
         footerPanel.setPreferredSize(new Dimension(800, 60));
         footerPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        
+
         JButton addButton = new JButton("Ajouter un Appartement");
         addButton.setFont(mainFont);
         addButton.setBackground(accentColor);
@@ -120,7 +126,7 @@ public class AdminAppartements extends JFrame {
         addButton.setFocusPainted(false);
         addButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         addButton.addActionListener(e -> openAppartementForm(null));
-        
+
         JButton backButton = new JButton("Retour au Dashboard");
         backButton.setFont(mainFont);
         backButton.setBackground(primaryColor);
@@ -135,34 +141,42 @@ public class AdminAppartements extends JFrame {
                 new DashboardAdmin();
             }
         });
-        
+
         footerPanel.add(addButton);
         footerPanel.add(backButton);
-        
         add(footerPanel, BorderLayout.SOUTH);
 
-        // Add listeners
-        searchButton.addActionListener(e -> loadAppartements(searchField.getText()));
-        searchField.addActionListener(e -> loadAppartements(searchField.getText()));
-        
-        // Initialize appartement list
-        loadAppartements("");
+        // Listeners
+        searchButton.addActionListener(e -> loadAppartements(searchField.getText(), (String) statutFilter.getSelectedItem()));
+        searchField.addActionListener(e -> loadAppartements(searchField.getText(), (String) statutFilter.getSelectedItem()));
+        statutFilter.addActionListener(e -> loadAppartements(searchField.getText(), (String) statutFilter.getSelectedItem()));
+
+        loadAppartements("", "Tous");
         setVisible(true);
     }
 
-    private void loadAppartements(String filtre) {
+    private void loadAppartements(String filtre, String statut) {
         model.setRowCount(0);
         try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT * FROM appartements";
+            String sql = "SELECT * FROM appartements WHERE 1=1";
             if (!filtre.isEmpty()) {
-                sql += " WHERE nom LIKE ? OR adresse LIKE ? OR ville LIKE ?";
+                sql += " AND (nom LIKE ? OR adresse LIKE ? OR ville LIKE ?)";
             }
+            if (!statut.equals("Tous")) {
+                sql += " AND statut = ?";
+            }
+
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                int paramIndex = 1;
                 if (!filtre.isEmpty()) {
-                    stmt.setString(1, "%" + filtre + "%");
-                    stmt.setString(2, "%" + filtre + "%");
-                    stmt.setString(3, "%" + filtre + "%");
+                    stmt.setString(paramIndex++, "%" + filtre + "%");
+                    stmt.setString(paramIndex++, "%" + filtre + "%");
+                    stmt.setString(paramIndex++, "%" + filtre + "%");
                 }
+                if (!statut.equals("Tous")) {
+                    stmt.setString(paramIndex, statut);
+                }
+
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     Object[] row = new Object[12];
@@ -187,10 +201,10 @@ public class AdminAppartements extends JFrame {
 
                     btnUpdate.addActionListener(e -> openAppartementForm(id));
                     btnDelete.addActionListener(e -> {
-                        int confirm = JOptionPane.showConfirmDialog(this, 
-                                "Êtes-vous sûr de vouloir supprimer cet appartement ?", 
-                                "Confirmation de suppression", 
-                                JOptionPane.YES_NO_OPTION, 
+                        int confirm = JOptionPane.showConfirmDialog(this,
+                                "Êtes-vous sûr de vouloir supprimer cet appartement ?",
+                                "Confirmation de suppression",
+                                JOptionPane.YES_NO_OPTION,
                                 JOptionPane.WARNING_MESSAGE);
                         if (confirm == JOptionPane.YES_OPTION) {
                             deleteAppartement(id);
@@ -205,8 +219,8 @@ public class AdminAppartements extends JFrame {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                    "Erreur lors du chargement des appartements: " + e.getMessage(), 
+            JOptionPane.showMessageDialog(this,
+                    "Erreur lors du chargement des appartements: " + e.getMessage(),
                     "Erreur", JOptionPane.ERROR_MESSAGE);
         }
 
@@ -258,7 +272,7 @@ public class AdminAppartements extends JFrame {
                     stmt.executeUpdate();
                     conn.commit();
                     JOptionPane.showMessageDialog(this, "Appartement supprime avec succes.");
-                    loadAppartements("");
+                    loadAppartements("", "Tous");
                 }
             } catch (SQLException e) {
                 conn.rollback();
@@ -416,7 +430,7 @@ public class AdminAppartements extends JFrame {
                             appartementId == null ? "Appartement ajoute avec succes!" : "Appartement mis a jour avec succes!", 
                             "Succès", JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
-                    loadAppartements("");
+                    loadAppartements("", "Tous");
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
@@ -508,3 +522,4 @@ public class AdminAppartements extends JFrame {
         }
     }
 }
+
