@@ -339,6 +339,40 @@ public class SearchAppartement extends JFrame {
                 insertStmt.setInt(5, nbPersonnes);
                 insertStmt.executeUpdate();
 
+                // Après insertStmt.executeUpdate();
+
+                String prixQuery = "SELECT a.prix_par_nuit, c.client_fidele " +
+                                "FROM appartements a JOIN clients c ON c.client_id = ? WHERE a.appartement_id = ?";
+                PreparedStatement prixStmt = conn.prepareStatement(prixQuery);
+                prixStmt.setInt(1, clientId);
+                prixStmt.setInt(2, appartementId);
+                ResultSet prixRs = prixStmt.executeQuery();
+
+                if (prixRs.next()) {
+                    double prixParNuit = prixRs.getDouble("prix_par_nuit");
+                    boolean clientFidele = prixRs.getBoolean("client_fidele");
+
+                    // Calcul du nombre de jours
+                    long diffInMillies = Math.abs(fin.getTime() - debut.getTime());
+                    long nbJours = (diffInMillies / (1000 * 60 * 60 * 24)) + 1;
+
+                    double total = prixParNuit * nbJours;
+
+                    if (clientFidele) {
+                        double remise = total * 0.10;
+                        double totalAvecRemise = total - remise;
+                        JOptionPane.showMessageDialog(this,
+                            "Vu que vous êtes un client fidèle, vous bénéficiez d'une remise de 10%.\n" +
+                            "Vous paierez : " + String.format("%.2f", totalAvecRemise) + "€ au lieu de " + String.format("%.2f", total) + "€.",
+                            "Réservation confirmée", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                            "Votre réservation a été confirmée.\nMontant total : " + String.format("%.2f", total) + "€.",
+                            "Réservation confirmée", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
+
+
                 JOptionPane.showMessageDialog(this, "Réservation effectuée avec succès !");
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -346,94 +380,96 @@ public class SearchAppartement extends JFrame {
         }
     }
 
-private void afficherPopupDisponibilites() {
-    JDialog dialog = new JDialog(this, "Rechercher un appartement disponible", true);
-    dialog.setSize(800, 500);
-    dialog.setLocationRelativeTo(this);
-    dialog.setLayout(new BorderLayout());
 
-    // Panel haut : champs de saisie
-    JPanel formPanel = new JPanel(new GridLayout(2, 4, 10, 10));
-    formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    JLabel debutLabel = new JLabel("Date de début:");
-    JSpinner dateDebut = new JSpinner(new SpinnerDateModel());
-    dateDebut.setEditor(new JSpinner.DateEditor(dateDebut, "dd/MM/yyyy"));
+    private void afficherPopupDisponibilites() {
+        JDialog dialog = new JDialog(this, "Rechercher un appartement disponible", true);
+        dialog.setSize(800, 500);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
 
-    JLabel finLabel = new JLabel("Date de fin:");
-    JSpinner dateFin = new JSpinner(new SpinnerDateModel());
-    dateFin.setEditor(new JSpinner.DateEditor(dateFin, "dd/MM/yyyy"));
+        // Panel haut : champs de saisie
+        JPanel formPanel = new JPanel(new GridLayout(2, 4, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    JLabel personnesLabel = new JLabel("Nombre de personnes:");
-    JSpinner nbPersonnesSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+        JLabel debutLabel = new JLabel("Date de début:");
+        JSpinner dateDebut = new JSpinner(new SpinnerDateModel());
+        dateDebut.setEditor(new JSpinner.DateEditor(dateDebut, "dd/MM/yyyy"));
 
-    JButton rechercherButton = new JButton("Rechercher");
+        JLabel finLabel = new JLabel("Date de fin:");
+        JSpinner dateFin = new JSpinner(new SpinnerDateModel());
+        dateFin.setEditor(new JSpinner.DateEditor(dateFin, "dd/MM/yyyy"));
 
-    formPanel.add(debutLabel);
-    formPanel.add(dateDebut);
-    formPanel.add(finLabel);
-    formPanel.add(dateFin);
-    formPanel.add(personnesLabel);
-    formPanel.add(nbPersonnesSpinner);
-    formPanel.add(new JLabel()); // vide
-    formPanel.add(rechercherButton);
+        JLabel personnesLabel = new JLabel("Nombre de personnes:");
+        JSpinner nbPersonnesSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
 
-    dialog.add(formPanel, BorderLayout.NORTH);
+        JButton rechercherButton = new JButton("Rechercher");
 
-    // Tableau des résultats
-    String[] columnNames = {"ID", "Nom", "Adresse", "Ville", "Type", "Capacité", "Prix/nuit", "Disponible"};
-    DefaultTableModel popupModel = new DefaultTableModel(columnNames, 0);
-    JTable resultsTable = new JTable(popupModel);
-    JScrollPane scrollPane = new JScrollPane(resultsTable);
-    dialog.add(scrollPane, BorderLayout.CENTER);
+        formPanel.add(debutLabel);
+        formPanel.add(dateDebut);
+        formPanel.add(finLabel);
+        formPanel.add(dateFin);
+        formPanel.add(personnesLabel);
+        formPanel.add(nbPersonnesSpinner);
+        formPanel.add(new JLabel()); // vide
+        formPanel.add(rechercherButton);
 
-    // Action du bouton rechercher
-    rechercherButton.addActionListener(e -> {
-        popupModel.setRowCount(0); // vider tableau
+        dialog.add(formPanel, BorderLayout.NORTH);
 
-        Date debut = (Date) dateDebut.getValue();
-        Date fin = (Date) dateFin.getValue();
-        int nbPersonnes = (Integer) nbPersonnesSpinner.getValue();
+        // Tableau des résultats
+        String[] columnNames = {"ID", "Nom", "Adresse", "Ville", "Type", "Capacité", "Prix/nuit", "Disponible"};
+        DefaultTableModel popupModel = new DefaultTableModel(columnNames, 0);
+        JTable resultsTable = new JTable(popupModel);
+        JScrollPane scrollPane = new JScrollPane(resultsTable);
+        dialog.add(scrollPane, BorderLayout.CENTER);
 
-        if (fin.before(debut)) {
-            JOptionPane.showMessageDialog(dialog, "La date de fin doit être après la date de début.", "Erreur", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        // Action du bouton rechercher
+        rechercherButton.addActionListener(e -> {
+            popupModel.setRowCount(0); // vider tableau
 
-        // Convertir en java.sql.Date
-        java.sql.Date sqlDebut = new java.sql.Date(debut.getTime());
-        java.sql.Date sqlFin = new java.sql.Date(fin.getTime());
+            Date debut = (Date) dateDebut.getValue();
+            Date fin = (Date) dateFin.getValue();
+            int nbPersonnes = (Integer) nbPersonnesSpinner.getValue();
 
-        try (Connection conn = DBConnection.getConnection()) {
-            CallableStatement stmt = conn.prepareCall("{CALL GetAppartementsDisponibles(?, ?, ?)}");
-            stmt.setInt(1, nbPersonnes);
-            stmt.setDate(2, sqlDebut);  // ✅ Utiliser java.sql.Date ici
-            stmt.setDate(3, sqlFin);    // ✅ Utiliser java.sql.Date ici
-            System.out.println("CALL GetAppartementsDisponibles(" + nbPersonnes + ", '" + sqlDebut + "', '" + sqlFin + "')");
-
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                popupModel.addRow(new Object[]{
-                    rs.getInt("appartement_id"),
-                    rs.getString("nom"),
-                    rs.getString("adresse"),
-                    rs.getString("ville"),
-                    rs.getString("type_appartement"),
-                    rs.getInt("capacite"),
-                    rs.getDouble("prix_par_nuit") + " €",
-                    rs.getInt("disponibilite") == 1 ? "Oui" : "Non"
-                });
+            if (fin.before(debut)) {
+                JOptionPane.showMessageDialog(dialog, "La date de fin doit être après la date de début.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(dialog, "Erreur lors de l'accès à la base de données.", "Erreur", JOptionPane.ERROR_MESSAGE);
-        }
-    });
+            // Convertir en java.sql.Date
+            java.sql.Date sqlDebut = new java.sql.Date(debut.getTime());
+            java.sql.Date sqlFin = new java.sql.Date(fin.getTime());
+
+            try (Connection conn = DBConnection.getConnection()) {
+                CallableStatement stmt = conn.prepareCall("{CALL GetAppartementsDisponibles(?, ?, ?)}");
+                stmt.setInt(1, nbPersonnes);
+                stmt.setDate(2, sqlDebut);  // ✅ Utiliser java.sql.Date ici
+                stmt.setDate(3, sqlFin);    // ✅ Utiliser java.sql.Date ici
+                System.out.println("CALL GetAppartementsDisponibles(" + nbPersonnes + ", '" + sqlDebut + "', '" + sqlFin + "')");
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    popupModel.addRow(new Object[]{
+                        rs.getInt("appartement_id"),
+                        rs.getString("nom"),
+                        rs.getString("adresse"),
+                        rs.getString("ville"),
+                        rs.getString("type_appartement"),
+                        rs.getInt("capacite"),
+                        rs.getDouble("prix_par_nuit") + " €",
+                        rs.getInt("disponibilite") == 1 ? "Oui" : "Non"
+                    });
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(dialog, "Erreur lors de l'accès à la base de données.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
 
-    dialog.setVisible(true);
-}
+        dialog.setVisible(true);
+    }
 
 
 
