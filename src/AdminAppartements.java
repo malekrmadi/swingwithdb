@@ -389,13 +389,17 @@ public class AdminAppartements extends JFrame {
                 return;
             }
 
+            String selectedStatut = (String) statut.getSelectedItem();
+            boolean isDisponible = selectedStatut.equals("disponible"); // Si statut ≠ "disponible", disponibilité = false
+
             try (Connection conn = DBConnection.getConnection()) {
                 String sql;
                 if (appartementId == null) {
-                    sql = "INSERT INTO appartements (nom, adresse, ville, type_appartement, capacite, prix_par_nuit, statut) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    sql = "INSERT INTO appartements (nom, adresse, ville, type_appartement, capacite, prix_par_nuit, statut, disponibilite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 } else {
-                    sql = "UPDATE appartements SET nom=?, adresse=?, ville=?, type_appartement=?, capacite=?, prix_par_nuit=?, statut=? WHERE appartement_id=?";
+                    sql = "UPDATE appartements SET nom=?, adresse=?, ville=?, type_appartement=?, capacite=?, prix_par_nuit=?, statut=?, disponibilite=? WHERE appartement_id=?";
                 }
+
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, nom.getText());
                     stmt.setString(2, adresse.getText());
@@ -403,12 +407,13 @@ public class AdminAppartements extends JFrame {
                     stmt.setString(4, (String) type.getSelectedItem());
                     stmt.setInt(5, Integer.parseInt(capacite.getText()));
                     stmt.setDouble(6, Double.parseDouble(prix.getText()));
-                    stmt.setString(7, (String) statut.getSelectedItem());
-                    if (appartementId != null) stmt.setInt(8, appartementId);
+                    stmt.setString(7, selectedStatut);
+                    stmt.setBoolean(8, isDisponible);
+                    if (appartementId != null) stmt.setInt(9, appartementId);
 
                     stmt.executeUpdate();
                     JOptionPane.showMessageDialog(dialog, 
-                            appartementId == null ? "Appartement ajoute avec succes!" : "Appartement mis e jour avec succes!", 
+                            appartementId == null ? "Appartement ajoute avec succes!" : "Appartement mis a jour avec succes!", 
                             "Succès", JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                     loadAppartements("");
@@ -429,9 +434,7 @@ public class AdminAppartements extends JFrame {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
-
-
-    
+  
     private JTextField createTextField() {
         JTextField field = new JTextField();
         field.setFont(mainFont);
