@@ -416,6 +416,9 @@ public class AdminLocations extends JFrame {
         panel.add(fieldPanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
     }
+
+
+    
     
     // Renderer for action buttons in the table
     class ActionButtonRenderer implements TableCellRenderer {
