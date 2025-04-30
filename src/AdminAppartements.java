@@ -119,6 +119,8 @@ public class AdminAppartements extends JFrame {
         footerPanel.setPreferredSize(new Dimension(800, 60));
         footerPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
+        
+
         JButton addButton = new JButton("Ajouter un Appartement");
         addButton.setFont(mainFont);
         addButton.setBackground(accentColor);
@@ -143,6 +145,23 @@ public class AdminAppartements extends JFrame {
         });
 
         footerPanel.add(addButton);
+
+        JButton freeAppartButton = new JButton("Appartements libres");
+        freeAppartButton.setFont(mainFont);
+        freeAppartButton.setBackground(new Color(39, 174, 96)); // Green
+        freeAppartButton.setForeground(Color.WHITE);
+        freeAppartButton.setFocusPainted(false);
+        freeAppartButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+
+        freeAppartButton.addActionListener(e -> {
+            dispose(); // optional: close current window
+            new AppartementsLibres(isSuperAdmin);
+        });
+        
+        footerPanel.add(freeAppartButton);
+
+
+
         footerPanel.add(backButton);
         add(footerPanel, BorderLayout.SOUTH);
 

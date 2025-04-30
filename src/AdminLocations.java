@@ -418,8 +418,7 @@ public class AdminLocations extends JFrame {
     }
 
 
-    
-    
+ 
     // Renderer for action buttons in the table
     class ActionButtonRenderer implements TableCellRenderer {
         @Override
