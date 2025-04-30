@@ -222,90 +222,117 @@ public class SearchAppartement extends JFrame {
         }
     }
 
-    private void faireReservation(int appartementId) {
-        // Create custom date picker panel
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JLabel titleLabel = new JLabel("Réservation d'appartement");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(titleLabel);
-        
-        JPanel datePanel = new JPanel(new GridLayout(2, 2, 10, 10));
-        datePanel.setBackground(Color.WHITE);
-        
-        JLabel debutLabel = new JLabel("Date de début:");
-        debutLabel.setFont(mainFont);
-        datePanel.add(debutLabel);
-        
-        JSpinner dateDebut = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor dateEditorDebut = new JSpinner.DateEditor(dateDebut, "dd/MM/yyyy");
-        dateDebut.setEditor(dateEditorDebut);
-        dateDebut.setFont(mainFont);
-        datePanel.add(dateDebut);
-        
-        JLabel finLabel = new JLabel("Date de fin:");
-        finLabel.setFont(mainFont);
-        datePanel.add(finLabel);
-        
-        JSpinner dateFin = new JSpinner(new SpinnerDateModel());
-        JSpinner.DateEditor dateEditorFin = new JSpinner.DateEditor(dateFin, "dd/MM/yyyy");
-        dateFin.setEditor(dateEditorFin);
-        dateFin.setFont(mainFont);
-        datePanel.add(dateFin);
-        
-        panel.add(datePanel);
+private void faireReservation(int appartementId) {
+    // Create custom date picker panel
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    
+    JLabel titleLabel = new JLabel("Réservation d'appartement");
+    titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+    titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+    panel.add(titleLabel);
+    
+    JPanel datePanel = new JPanel(new GridLayout(3, 2, 10, 10));
+    datePanel.setBackground(Color.WHITE);
+    
+    JLabel debutLabel = new JLabel("Date de début:");
+    debutLabel.setFont(mainFont);
+    datePanel.add(debutLabel);
+    
+    JSpinner dateDebut = new JSpinner(new SpinnerDateModel());
+    JSpinner.DateEditor dateEditorDebut = new JSpinner.DateEditor(dateDebut, "dd/MM/yyyy");
+    dateDebut.setEditor(dateEditorDebut);
+    dateDebut.setFont(mainFont);
+    datePanel.add(dateDebut);
+    
+    JLabel finLabel = new JLabel("Date de fin:");
+    finLabel.setFont(mainFont);
+    datePanel.add(finLabel);
+    
+    JSpinner dateFin = new JSpinner(new SpinnerDateModel());
+    JSpinner.DateEditor dateEditorFin = new JSpinner.DateEditor(dateFin, "dd/MM/yyyy");
+    dateFin.setEditor(dateEditorFin);
+    dateFin.setFont(mainFont);
+    datePanel.add(dateFin);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Réservation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (result == JOptionPane.OK_OPTION) {
-            Date debut = (Date) dateDebut.getValue();
-            Date fin = (Date) dateFin.getValue();
+    JLabel personnesLabel = new JLabel("Nombre de personnes:");
+    personnesLabel.setFont(mainFont);
+    datePanel.add(personnesLabel);
 
-            if (fin.before(debut)) {
-                JOptionPane.showMessageDialog(this, "La date de fin doit être après la date de début.", "Erreur", JOptionPane.ERROR_MESSAGE);
+    JSpinner spinnerPersonnes = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1)); // min=1, max=100
+    spinnerPersonnes.setFont(mainFont);
+    datePanel.add(spinnerPersonnes);
+    
+    panel.add(datePanel);
+
+    int result = JOptionPane.showConfirmDialog(this, panel, "Réservation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+    if (result == JOptionPane.OK_OPTION) {
+        Date debut = (Date) dateDebut.getValue();
+        Date fin = (Date) dateFin.getValue();
+        int nbPersonnes = (Integer) spinnerPersonnes.getValue();
+
+        if (fin.before(debut)) {
+            JOptionPane.showMessageDialog(this, "La date de fin doit être après la date de début.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dDebut = sdf.format(debut);
+        String dFin = sdf.format(fin);
+
+        try (Connection conn = DBConnection.getConnection()) {
+            // Vérifier la capacité de l'appartement
+            String getCapaciteQuery = "SELECT capacite FROM appartements WHERE appartement_id = ?";
+            PreparedStatement capStmt = conn.prepareStatement(getCapaciteQuery);
+            capStmt.setInt(1, appartementId);
+            ResultSet capRs = capStmt.executeQuery();
+            int capacite = 0;
+            if (capRs.next()) {
+                capacite = capRs.getInt("capacite");
+            }
+
+            if (nbPersonnes > capacite) {
+                JOptionPane.showMessageDialog(this, "Le nombre de personnes dépasse la capacité maximale de l'appartement (" + capacite + ").", "Capacité dépassée", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            String dDebut = sdf.format(debut);
-            String dFin = sdf.format(fin);
+            // Vérifier disponibilité
+            String checkQuery = "SELECT COUNT(*) FROM locations WHERE appartement_id = ? AND ((date_debut <= ? AND date_fin >= ?) OR (date_debut <= ? AND date_fin >= ?) OR (date_debut >= ? AND date_fin <= ?))";
+            PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+            checkStmt.setInt(1, appartementId);
+            checkStmt.setString(2, dDebut);
+            checkStmt.setString(3, dDebut);
+            checkStmt.setString(4, dFin);
+            checkStmt.setString(5, dFin);
+            checkStmt.setString(6, dDebut);
+            checkStmt.setString(7, dFin);
 
-            try (Connection conn = DBConnection.getConnection()) {
-                String checkQuery = "SELECT COUNT(*) FROM locations WHERE appartement_id = ? AND ((date_debut <= ? AND date_fin >= ?) OR (date_debut <= ? AND date_fin >= ?) OR (date_debut >= ? AND date_fin <= ?))";
-                PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
-                checkStmt.setInt(1, appartementId);
-                checkStmt.setString(2, dDebut);
-                checkStmt.setString(3, dDebut);
-                checkStmt.setString(4, dFin);
-                checkStmt.setString(5, dFin);
-                checkStmt.setString(6, dDebut);
-                checkStmt.setString(7, dFin);
-
-                ResultSet rs = checkStmt.executeQuery();
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    JOptionPane.showMessageDialog(this, "Appartement non disponible sur cette période. Choisissez une autre.", "Indisponible", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-
-                String insert = "INSERT INTO locations (client_id, appartement_id, date_debut, date_fin, nombre_personnes) VALUES (?, ?, ?, ?, ?)";
-                PreparedStatement insertStmt = conn.prepareStatement(insert);
-                insertStmt.setInt(1, clientId);
-                insertStmt.setInt(2, appartementId);
-                insertStmt.setString(3, dDebut);
-                insertStmt.setString(4, dFin);
-                insertStmt.setInt(5, 1); // nombre_personnes par défaut à 1
-                insertStmt.executeUpdate();
-
-                JOptionPane.showMessageDialog(this, "Réservation effectuée avec succès !");
-            } catch (SQLException e) {
-                e.printStackTrace();
+            ResultSet rs = checkStmt.executeQuery();
+            rs.next();
+            if (rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(this, "Appartement non disponible sur cette période. Choisissez une autre.", "Indisponible", JOptionPane.WARNING_MESSAGE);
+                return;
             }
+
+            // Insérer la réservation
+            String insert = "INSERT INTO locations (client_id, appartement_id, date_debut, date_fin, nombre_personnes) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement insertStmt = conn.prepareStatement(insert);
+            insertStmt.setInt(1, clientId);
+            insertStmt.setInt(2, appartementId);
+            insertStmt.setString(3, dDebut);
+            insertStmt.setString(4, dFin);
+            insertStmt.setInt(5, nbPersonnes);
+            insertStmt.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Réservation effectuée avec succès !");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
+}
+
 
     // Modern button renderer for table
     class ModernButtonRenderer extends JButton implements TableCellRenderer {
