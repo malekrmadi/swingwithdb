@@ -87,14 +87,7 @@ public class Login extends JFrame {
 
         add(formPanel, BorderLayout.CENTER);
 
-        // Footer
-        JPanel footerPanel = new JPanel();
-        footerPanel.setBackground(backgroundColor);
-        JLabel footerLabel = new JLabel("© 2023 Gestion de Location. Tous droits reserves.");
-        footerLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        footerLabel.setForeground(textColor);
-        footerPanel.add(footerLabel);
-        add(footerPanel, BorderLayout.SOUTH);
+
 
         // Login button logic
         loginButton.addActionListener(new ActionListener() {

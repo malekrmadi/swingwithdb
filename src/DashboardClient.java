@@ -94,33 +94,21 @@ public class DashboardClient extends JFrame {
         cardsPanel.add(card1);
         
         // Card 2
-        JPanel card2 = createDashboardCard("Mes Locations", "Gérez vos locations actuelles et passées", new Color(46, 204, 113));
+        JPanel card2 = createDashboardCard("Mes Locations", "Gerez vos locations actuelles et passees", new Color(46, 204, 113));
         cardsPanel.add(card2);
         
         // Card 3
         JPanel card3 = createDashboardCard("Mon Profil", "Consultez et modifiez vos informations personnelles", new Color(155, 89, 182));
         cardsPanel.add(card3);
         
-        // Card 4
-        JPanel card4 = createDashboardCard("Aide & Support", "Contactez-nous pour toute assistance", new Color(230, 126, 34));
-        cardsPanel.add(card4);
+
         
         dashboardContent.add(cardsPanel, BorderLayout.CENTER);
         contentPanel.add(dashboardContent, BorderLayout.CENTER);
         
         add(contentPanel, BorderLayout.CENTER);
         
-        // Footer panel
-        JPanel footerPanel = new JPanel();
-        footerPanel.setBackground(lightColor);
-        footerPanel.setPreferredSize(new Dimension(800, 40));
-        
-        JLabel footerLabel = new JLabel("© 2023 Gestion de Location. Tous droits réservés.");
-        footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        footerLabel.setForeground(textColor);
-        footerPanel.add(footerLabel);
-        
-        add(footerPanel, BorderLayout.SOUTH);
+
 
         // Actions des boutons
         btnSearch.addActionListener(e -> {dispose(); new SearchAppartement(clientId);});

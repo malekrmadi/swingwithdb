@@ -70,11 +70,11 @@ public class MonProfil extends JFrame {
         
         formPanel.add(createLabelPanel("Nom:"));
         formPanel.add(nomField);
-        formPanel.add(createLabelPanel("Prénom:"));
+        formPanel.add(createLabelPanel("Prenom:"));
         formPanel.add(prenomField);
         formPanel.add(createLabelPanel("Email:"));
         formPanel.add(emailField);
-        formPanel.add(createLabelPanel("Téléphone:"));
+        formPanel.add(createLabelPanel("Telephone:"));
         formPanel.add(telephoneField);
         formPanel.add(createLabelPanel("Adresse:"));
         formPanel.add(adresseField);
@@ -190,17 +190,7 @@ public class MonProfil extends JFrame {
         contentPanel.add(buttonPanel);
         add(contentPanel, BorderLayout.CENTER);
         
-        // Footer panel
-        JPanel footerPanel = new JPanel();
-        footerPanel.setBackground(lightColor);
-        footerPanel.setPreferredSize(new Dimension(800, 40));
-        
-        JLabel footerLabel = new JLabel("© 2023 Gestion de Location. Tous droits réservés.");
-        footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        footerLabel.setForeground(textColor);
-        footerPanel.add(footerLabel);
-        
-        add(footerPanel, BorderLayout.SOUTH);
+
 
         loadClientData();
 
@@ -253,7 +243,7 @@ public class MonProfil extends JFrame {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des données.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des donnees.", "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 

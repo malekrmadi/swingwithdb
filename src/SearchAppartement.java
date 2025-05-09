@@ -91,7 +91,7 @@ public class SearchAppartement extends JFrame {
         add(searchPanel, BorderLayout.NORTH);
         
         // Create table with custom renderer for modern look
-        model = new DefaultTableModel(new String[]{"ID", "Nom", "Adresse", "Ville", "Type", "Capacité", "Prix/Nuit", "Disponible", "Action"}, 0) {
+        model = new DefaultTableModel(new String[]{"ID", "Nom", "Adresse", "Ville", "Type", "Capacite", "Prix/Nuit", "Disponible", "Action"}, 0) {
             public boolean isCellEditable(int row, int column) {
                 return column == 8;
             }
@@ -203,7 +203,7 @@ public class SearchAppartement extends JFrame {
                     rs.getInt("capacite"),
                     rs.getDouble("prix_par_nuit") + " €",
                     rs.getInt("disponibilite") == 1 ? "Oui" : "Non",
-                    "Réserver"
+                    "Reserver"
                 });
             }
         } catch (SQLException ex) {
@@ -227,7 +227,7 @@ public class SearchAppartement extends JFrame {
                     rs.getInt("capacite"),
                     rs.getDouble("prix_par_nuit") + " €",
                     rs.getInt("disponibilite") == 1 ? "Oui" : "Non",
-                    "Réserver"
+                    "Reserver"
                 });
             }
         } catch (SQLException ex) {
@@ -241,7 +241,7 @@ public class SearchAppartement extends JFrame {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        JLabel titleLabel = new JLabel("Réservation d'appartement");
+        JLabel titleLabel = new JLabel("Reservation d'appartement");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
@@ -250,7 +250,7 @@ public class SearchAppartement extends JFrame {
         JPanel datePanel = new JPanel(new GridLayout(3, 2, 10, 10));
         datePanel.setBackground(Color.WHITE);
         
-        JLabel debutLabel = new JLabel("Date de début:");
+        JLabel debutLabel = new JLabel("Date de debut:");
         debutLabel.setFont(mainFont);
         datePanel.add(debutLabel);
         
@@ -280,14 +280,14 @@ public class SearchAppartement extends JFrame {
         
         panel.add(datePanel);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Réservation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(this, panel, "Reservation", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result == JOptionPane.OK_OPTION) {
             Date debut = (Date) dateDebut.getValue();
             Date fin = (Date) dateFin.getValue();
             int nbPersonnes = (Integer) spinnerPersonnes.getValue();
 
             if (fin.before(debut)) {
-                JOptionPane.showMessageDialog(this, "La date de fin doit être après la date de début.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "La date de fin doit être après la date de debut.", "Erreur", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -307,7 +307,7 @@ public class SearchAppartement extends JFrame {
                 }
 
                 if (nbPersonnes > capacite) {
-                    JOptionPane.showMessageDialog(this, "Le nombre de personnes dépasse la capacité maximale de l'appartement (" + capacite + ").", "Capacité dépassée", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Le nombre de personnes depasse la capacite maximale de l'appartement (" + capacite + ").", "Capacité dépassée", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
@@ -325,7 +325,7 @@ public class SearchAppartement extends JFrame {
                 ResultSet rs = checkStmt.executeQuery();
                 rs.next();
                 if (rs.getInt(1) > 0) {
-                    JOptionPane.showMessageDialog(this, "Appartement non disponible sur cette période. Choisissez une autre.", "Indisponible", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Appartement non disponible sur cette periode. Choisissez une autre.", "Indisponible", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
@@ -362,18 +362,18 @@ public class SearchAppartement extends JFrame {
                         double remise = total * 0.10;
                         double totalAvecRemise = total - remise;
                         JOptionPane.showMessageDialog(this,
-                            "Vu que vous êtes un client fidèle, vous bénéficiez d'une remise de 10%.\n" +
+                            "Vu que vous êtes un client fidèle, vous beneficiez d'une remise de 10%.\n" +
                             "Vous paierez : " + String.format("%.2f", totalAvecRemise) + "€ au lieu de " + String.format("%.2f", total) + "€.",
-                            "Réservation confirmée", JOptionPane.INFORMATION_MESSAGE);
+                            "Reservation confirmee", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(this,
-                            "Votre réservation a été confirmée.\nMontant total : " + String.format("%.2f", total) + "€.",
-                            "Réservation confirmée", JOptionPane.INFORMATION_MESSAGE);
+                            "Votre reservation a ete confirmee.\nMontant total : " + String.format("%.2f", total) + "€.",
+                            "Reservation confirmee", JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
 
 
-                JOptionPane.showMessageDialog(this, "Réservation effectuée avec succès !");
+                JOptionPane.showMessageDialog(this, "Reservation effectuee avec succès !");
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -392,7 +392,7 @@ public class SearchAppartement extends JFrame {
         JPanel formPanel = new JPanel(new GridLayout(2, 4, 10, 10));
         formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel debutLabel = new JLabel("Date de début:");
+        JLabel debutLabel = new JLabel("Date de debut:");
         JSpinner dateDebut = new JSpinner(new SpinnerDateModel());
         dateDebut.setEditor(new JSpinner.DateEditor(dateDebut, "dd/MM/yyyy"));
 
@@ -417,7 +417,7 @@ public class SearchAppartement extends JFrame {
         dialog.add(formPanel, BorderLayout.NORTH);
 
         // Tableau des résultats
-        String[] columnNames = {"ID", "Nom", "Adresse", "Ville", "Type", "Capacité", "Prix/nuit", "Disponible"};
+        String[] columnNames = {"ID", "Nom", "Adresse", "Ville", "Type", "Capacite", "Prix/nuit", "Disponible"};
         DefaultTableModel popupModel = new DefaultTableModel(columnNames, 0);
         JTable resultsTable = new JTable(popupModel);
         JScrollPane scrollPane = new JScrollPane(resultsTable);
@@ -432,7 +432,7 @@ public class SearchAppartement extends JFrame {
             int nbPersonnes = (Integer) nbPersonnesSpinner.getValue();
 
             if (fin.before(debut)) {
-                JOptionPane.showMessageDialog(dialog, "La date de fin doit être après la date de début.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "La date de fin doit être après la date de debut.", "Erreur", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -463,7 +463,7 @@ public class SearchAppartement extends JFrame {
 
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(dialog, "Erreur lors de l'accès à la base de données.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Erreur lors de l'accès à la base de donnees.", "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -486,7 +486,7 @@ public class SearchAppartement extends JFrame {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setText("Réserver");
+            setText("Reserver");
             return this;
         }
     }
@@ -515,12 +515,12 @@ public class SearchAppartement extends JFrame {
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             selectedRow = row;
-            button.setText("Réserver");
+            button.setText("Reserver");
             return button;
         }
 
         public Object getCellEditorValue() {
-            return "Réserver";
+            return "Reserver";
         }
     }
 }
