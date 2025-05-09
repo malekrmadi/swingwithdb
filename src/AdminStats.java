@@ -42,7 +42,7 @@ public class AdminStats extends JFrame {
         tabs.setBackground(Color.WHITE);
         tabs.setForeground(textColor);
         
-        tabs.add("apparetment les plus demandées", new TopAppartmentsPanel(primaryColor, lightColor, textColor, mainFont));
+        tabs.add("apparetment les plus demandees", new TopAppartmentsPanel(primaryColor, lightColor, textColor, mainFont));
         tabs.add("Meilleurs Clients", new TopClientsPanel(primaryColor, lightColor, textColor, mainFont));
         tabs.add("Occupation par Type", new ApartmentOccupancyPanel(primaryColor, lightColor, textColor, mainFont));
 
@@ -189,7 +189,7 @@ class TopAppartmentsPanel extends JPanel {
         // Title
         g2.setFont(new Font("Segoe UI", Font.BOLD, 22));
         g2.setColor(textColor);
-        g2.drawString("Top 5 Appartements les plus demandés", width / 2 - 200, 50);
+        g2.drawString("Top 5 Appartements les plus demandes", width / 2 - 200, 50);
 
         // Y axis values
         int max = Collections.max(data.values());
@@ -228,7 +228,7 @@ class TopAppartmentsPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
         g2.setColor(textColor);
-        g2.drawString("Aucune donnée disponible", getWidth() / 2 - 100, getHeight() / 2);
+        g2.drawString("Aucune donnee disponible", getWidth() / 2 - 100, getHeight() / 2);
     }
 }
 
@@ -345,7 +345,7 @@ class TopClientsPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
         g2.setColor(textColor);
-        g2.drawString("Aucune donnée disponible", getWidth()/2 - 100, getHeight()/2);
+        g2.drawString("Aucune donnee disponible", getWidth()/2 - 100, getHeight()/2);
     }
 }
 
@@ -404,7 +404,7 @@ class ApartmentOccupancyPanel extends JPanel {
         // Draw chart title
         g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
         g2.setColor(textColor);
-        g2.drawString("Répartition des Locations par Type d'Appartement", width / 2 - 200, 40);
+        g2.drawString("Repartition des Locations par Type d'Appartement", width / 2 - 200, 40);
         
         int pieSize = Math.min(width, height) - 200;
         int x = (width - pieSize) / 2;
@@ -482,7 +482,7 @@ class ApartmentOccupancyPanel extends JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
         g2.setColor(textColor);
-        g2.drawString("Aucune donnée disponible", getWidth()/2 - 100, getHeight()/2);
+        g2.drawString("Aucune donnee disponible", getWidth()/2 - 100, getHeight()/2);
     }
 }
 

@@ -170,7 +170,7 @@ public class AdminLocations extends JFrame {
                     row[2] = rs.getString("appart_nom");
                     row[3] = rs.getDate("date_debut");
                     row[4] = rs.getDate("date_fin");
-                    row[5] = rs.getBigDecimal("penalite_retard") + " €";
+                    row[5] = rs.getBigDecimal("penalite_retard") + " Dt";
                     row[6] = rs.getInt("nombre_personnes");
 
                     JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
@@ -289,7 +289,7 @@ public class AdminLocations extends JFrame {
 
         addFormField(formPanel, "ID du Client:", clientCombo);
         addFormField(formPanel, "ID de l'Appartement:", appartCombo);
-        addFormField(formPanel, "Date de début (yyyy-MM-dd):", dateDebutField);
+        addFormField(formPanel, "Date de debut (yyyy-MM-dd):", dateDebutField);
         addFormField(formPanel, "Date de fin (yyyy-MM-dd):", dateFinField);
         addFormField(formPanel, "Nombre de personnes:", personnesField);
 
@@ -322,7 +322,7 @@ public class AdminLocations extends JFrame {
                 if (rsCap.next()) {
                     int capacite = rsCap.getInt("capacite");
                     if (personnes > capacite) {
-                        JOptionPane.showMessageDialog(dialog, "Le nombre de personnes dépasse la capacité de l'appartement (" + capacite + ").", "Erreur", JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(dialog, "Le nombre de personnes depasse la capacite de l'appartement (" + capacite + ").", "Erreur", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
                 }
@@ -348,7 +348,7 @@ public class AdminLocations extends JFrame {
 
                 ResultSet rsDispo = stmtDispo.executeQuery();
                 if (rsDispo.next()) {
-                    JOptionPane.showMessageDialog(dialog, "L'appartement est déjà réservé sur cette période.", "Indisponible", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, "L'appartement est deja reserve sur cette periode.", "Indisponible", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
 
@@ -371,7 +371,7 @@ public class AdminLocations extends JFrame {
 
                     dialog.dispose();
                     loadLocations("");
-                    JOptionPane.showMessageDialog(this, rs == null ? "Location ajoutée avec succès!" : "Location mise à jour avec succès!", "Succès", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, rs == null ? "Location ajoutee avec succes!" : "Location mise e jour avec succes!", "Succes", JOptionPane.INFORMATION_MESSAGE);
                 }
 
             } catch (Exception ex) {

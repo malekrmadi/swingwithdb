@@ -56,7 +56,7 @@ public class DashboardAdmin extends JFrame {
         JButton btnLocations = createMenuButton("Locations");
         JButton btnClients = createMenuButton("Clients");
         JButton btnStatistiques = createMenuButton("Statistiques");
-        JButton btnLogout = createMenuButton("Déconnexion");
+        JButton btnLogout = createMenuButton("Deconnexion");
         
         sidebarPanel.add(btnAppartements);
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -91,11 +91,11 @@ public class DashboardAdmin extends JFrame {
         cardsPanel.add(card1);
         
         // Card 2
-        JPanel card2 = createDashboardCard("Gestion des Locations", "Consultez et gérez les locations", new Color(46, 204, 113));
+        JPanel card2 = createDashboardCard("Gestion des Locations", "Consultez et gerez les locations", new Color(46, 204, 113));
         cardsPanel.add(card2);
         
         // Card 3
-        JPanel card3 = createDashboardCard("Gestion des Clients", "Gérez les comptes clients", new Color(155, 89, 182));
+        JPanel card3 = createDashboardCard("Gestion des Clients", "Gerez les comptes clients", new Color(155, 89, 182));
         cardsPanel.add(card3);
         
         // Card 4
@@ -107,17 +107,7 @@ public class DashboardAdmin extends JFrame {
         
         add(contentPanel, BorderLayout.CENTER);
         
-        // Footer panel
-        JPanel footerPanel = new JPanel();
-        footerPanel.setBackground(lightColor);
-        footerPanel.setPreferredSize(new Dimension(800, 40));
-        
-        JLabel footerLabel = new JLabel("© 2023 Gestion de Location. Tous droits réservés.");
-        footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        footerLabel.setForeground(textColor);
-        footerPanel.add(footerLabel);
-        
-        add(footerPanel, BorderLayout.SOUTH);
+
 
         // Add action listeners to buttons
         btnAppartements.addActionListener(e -> {
